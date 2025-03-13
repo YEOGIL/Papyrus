@@ -19,38 +19,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             PapyrusBabyTheme {
-                Navigation()
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination ="home",
+                    // if (viewmodel.profiles.isEmpty()) "main" else "profile",
+                ) {
+                    composable("home") {HomeScreen(navController)}
+                    composable("write") {WriteLetterScreen(navController)}
+                }
             }
         }
-    }
-}
-
-@Composable
-fun Navigation(){
-    val navController = rememberNavController()
-    NavHost(
-        navController = navController,
-        startDestination ="home",
-        // if (viewmodel.profiles.isEmpty()) "main" else "profile",
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None }
-    ) {
-        composable("home") {
-            HomeScreen(navController)
-        }
-        composable("write") {
-            WriteLetterScreen(navController)
-        }
-    }
-}
-
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    PapyrusBabyTheme {
-        HomeScreen(navController = rememberNavController())
     }
 }
