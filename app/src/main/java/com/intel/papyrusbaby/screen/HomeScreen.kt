@@ -1,4 +1,4 @@
-package com.intel.papyrusbaby
+package com.intel.papyrusbaby.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
@@ -31,6 +30,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.intel.papyrusbaby.AppBar
+import com.intel.papyrusbaby.PersonCategory
+import com.intel.papyrusbaby.R
 
 
 @Composable
@@ -82,7 +84,7 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun PersonBox(person: PersonCategory,navController: NavController) {
+fun PersonBox(person: PersonCategory, navController: NavController) {
     Box(
         modifier = Modifier.fillMaxWidth()
             .clickable {  navController.navigate("write") {
