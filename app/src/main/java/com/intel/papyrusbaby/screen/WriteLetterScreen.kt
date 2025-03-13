@@ -1,6 +1,8 @@
 package com.intel.papyrusbaby.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +14,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -37,7 +44,7 @@ import androidx.navigation.NavController
 import com.intel.papyrusbaby.AppBar
 
 @Composable
-fun WriteLetterScreen(navController: NavController){
+fun WriteLetterScreen(navController: NavController) {
     AppBar(content = { paddingValues ->
         Column(
             modifier = Modifier
@@ -46,65 +53,122 @@ fun WriteLetterScreen(navController: NavController){
                 .padding(paddingValues)
         ) {
             // 메시지 리스트 상태 관리
-            val messages = remember { mutableStateListOf<ChatMessage>() }
+            val messages = remember { mutableStateListOf<UserPrompt>() }
+            val style = remember { mutableStateListOf<SelectedOptions>() }
+
             // 현재 입력 텍스트 상태 관리
             var currentInput by remember { mutableStateOf("") }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFFFFAF3))
-            ) {
-                // 메시지 리스트 영역
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                ) {
-                    items(items = messages) { message ->
-                        ChatBubble(message = message)
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
+            var selectedWriters by remember { mutableStateOf(listOf<String>()) }
+            var selectedFormats by remember { mutableStateOf(listOf<String>()) }
 
-                // 하단 입력 영역
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .background(Color(0xFFFFFFFF))
-                        .padding(horizontal = 10.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CustomInputField(
-                        currentInput = currentInput,
-                        onValueChange = { currentInput = it },
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(
-                        onClick = {
-                            if (currentInput.isNotBlank()) {
-                                // 사용자의 메시지 추가
-                                messages.add(ChatMessage(text = currentInput, isUser = true))
-                                // TODO: 서버에 currentInput 전송 후 챗봇 응답 처리
-                                currentInput = ""
-                            }
+            Row(modifier = Modifier.fillMaxWidth()) {
+                ExpandableFilter(
+                    title = if (selectedWriters.isNotEmpty()) {
+                        selectedWriters.joinToString(", ")
+                    } else {
+                        "작가"
+                    },
+                    options = listOf("윤동주", "김소월", "셰익스피어", "찰스 디킨스", "한강"),
+                    selectedOptions = selectedWriters,
+                    onOptionSelected = { option, selected ->
+                        selectedWriters = if (selected) {
+                            selectedWriters + option
+                        } else {
+                            selectedWriters - option
                         }
-                    ) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "전송")
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+                ExpandableFilter(
+                    title = if (selectedFormats.isNotEmpty()) {
+                        selectedFormats.joinToString(", ")
+                    } else {
+                        "글 형식"
+                    },
+                    options = listOf("일기", "편지", "반성문", "단문", "엽서"),
+                    selectedOptions = selectedFormats,
+                    onOptionSelected = { option, selected ->
+                        selectedFormats = if (selected) {
+                            selectedFormats + option
+                        } else {
+                            selectedFormats - option
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            // 프롬프트 입력 영역
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFFFFFF))
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CustomInputField(
+                    currentInput = currentInput,
+                    onValueChange = { currentInput = it },
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = {
+                        if (currentInput.isNotBlank()) {
+                            // 사용자의 메시지 추가
+                            messages.add(UserPrompt(text = currentInput, isUser = true))
+                            // TODO: 서버에 currentInput 전송 후 챗봇 응답 처리
+                            currentInput = ""
+                            style.add(
+                                SelectedOptions(
+                                    writer = selectedWriters.joinToString(", "),
+                                    type = selectedFormats.joinToString(", ")
+                                )
+                            )
+
+                        }
                     }
+                ) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "전송")
                 }
             }
-        }
+            // 메시지 리스트 영역
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                itemsIndexed(messages) { index, message ->
+                    ChatBubble(message = message)
+                    // 사용자의 메시지에 대한 스타일 정보가 있다면 출력
+                    if (index < style.size) {
+                        val selectedOption = style[index]
+                        Text(
+                            text = "작가: ${selectedOption.writer}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1B1818),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        Text(
+                            text = "글 형식: ${selectedOption.type}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF1B1818),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }        }
     }, navController = navController)
 }
 
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(message: UserPrompt) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
+        horizontalArrangement = Arrangement.Start
     ) {
         Box(
             modifier = Modifier
@@ -138,7 +202,7 @@ fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modi
         decorationBox = { innerTextField ->
             if (currentInput.isEmpty()) {
                 Text(
-                    text = "메시지를 입력하세요",
+                    text = "상세 내용을 입력하세요",
                     color = Color.Gray,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
@@ -149,8 +213,106 @@ fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modi
     )
 }
 
-// 메시지 데이터 클래스
-data class ChatMessage(
+// Selected Style 클래스
+data class SelectedOptions(
+    val writer: String,
+    val type: String
+)
+
+// 프롬프트 클래스
+data class UserPrompt(
     val text: String,
     val isUser: Boolean
 )
+
+@Composable
+fun ExpandableFilter(
+    title: String = "Size",
+    options: List<String>,
+    selectedOptions: List<String>,
+    onOptionSelected: (String, Boolean) -> Unit,
+    modifier: Modifier = Modifier.fillMaxWidth() // 기본값은 fillMaxWidth()
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier
+            .padding(vertical = 5.dp, horizontal = 10.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .border(width = 1.dp, color = Color(0xFFA4A4A4), shape = RoundedCornerShape(10.dp))
+    ) {
+        // 필터 탭 헤더: 클릭 시 DropdownMenu를 표시합니다.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true }
+                .background(Color(0xFFFFFFFF))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Expand",
+                tint = Color(0xFFA4A4A4)
+            )
+        }
+
+        // DropdownMenu를 사용하여 필터 옵션들을 오버레이로 표시합니다.
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .padding(horizontal = 40.dp)
+                .fillMaxWidth()
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 0.dp,
+                        topEnd = 0.dp,
+                        bottomEnd = 10.dp,
+                        bottomStart = 10.dp
+                    )
+                )
+                .background(Color(0xFFF0F0F0))
+                .border(
+                    width = 0.5.dp,
+                    color = Color(0xFF777777),
+                    shape = RoundedCornerShape(
+                        bottomEnd = 10.dp,
+                        bottomStart = 10.dp
+                    )
+                )
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    onClick = {
+                        val currentlySelected = selectedOptions.contains(option)
+                        onOptionSelected(option, !currentlySelected)
+                        expanded = false
+                    },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = selectedOptions.contains(option),
+                                onCheckedChange = { checked ->
+                                    onOptionSelected(option, checked)
+                                    expanded = false
+                                }
+                            )
+                            Text(
+                                text = option,
+                                modifier = Modifier.padding(start = 5.dp)
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
