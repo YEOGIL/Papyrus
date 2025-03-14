@@ -73,9 +73,9 @@ fun WriteLetterScreen(navController: NavController) {
                     selectedOptions = selectedWriters,
                     onOptionSelected = { option, selected ->
                         selectedWriters = if (selected) {
-                            selectedWriters + option
+                            listOf(option) // 기존 선택 초기화 후 새 옵션만 추가
                         } else {
-                            selectedWriters - option
+                            emptyList()    // 선택 해제하면 빈 리스트로
                         }
                     },
                     modifier = Modifier.weight(1f)
@@ -90,9 +90,9 @@ fun WriteLetterScreen(navController: NavController) {
                     selectedOptions = selectedFormats,
                     onOptionSelected = { option, selected ->
                         selectedFormats = if (selected) {
-                            selectedFormats + option
+                            listOf(option) // 기존 선택 초기화 후 새 옵션만 추가
                         } else {
-                            selectedFormats - option
+                            emptyList()    // 선택 해제하면 빈 리스트로
                         }
                     },
                     modifier = Modifier.weight(1f)
