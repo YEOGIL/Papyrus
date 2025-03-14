@@ -10,6 +10,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.intel.papyrusbaby.screen.ArchivedLetterScreen
 import com.intel.papyrusbaby.screen.HomeScreen
 import com.intel.papyrusbaby.screen.WriteLetterScreen
 import com.intel.papyrusbaby.ui.theme.PapyrusBabyTheme
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("home") {HomeScreen(navController)}
                     composable("write") {WriteLetterScreen(navController)}
+                    composable("archive") {ArchivedLetterScreen(navController)}
                 }
             }
         }
