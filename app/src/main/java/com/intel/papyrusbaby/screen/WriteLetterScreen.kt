@@ -124,7 +124,8 @@ fun WriteLetterScreen(navController: NavController) {
                                     type = selectedFormats.joinToString(", ")
                                 )
                             )
-
+                            selectedWriters = emptyList()
+                            selectedFormats = emptyList()
                         }
                     }
                 ) {
