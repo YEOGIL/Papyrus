@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PapyrusBaby"
+rootProject.name = "Papyrus"
 include(":app")

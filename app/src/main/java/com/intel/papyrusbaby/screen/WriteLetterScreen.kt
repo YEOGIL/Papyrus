@@ -7,14 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -30,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,16 +32,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.intel.papyrusbaby.AppBar
+import com.intel.papyrusbaby.flask.OpenAiServer
 
 @Composable
 fun WriteLetterScreen(navController: NavController) {
+    // 키보드 닫기 위한 focusManager
+    val focusManager = LocalFocusManager.current
+    val openAiResponse = ""
+
     AppBar(content = { paddingValues ->
         // 단일 프롬프트 정보를 저장하는 상태 변수
         var lastUserSelection by remember { mutableStateOf<UserSelect?>(null) }
@@ -57,6 +59,9 @@ fun WriteLetterScreen(navController: NavController) {
                 .fillMaxSize()
                 .background(Color(0xFFFFFAF3))
                 .padding(paddingValues)
+                .pointerInput(Unit) {
+                    focusManager.clearFocus()
+                }
         ) {
             // 현재 입력 텍스트 상태 관리
             var currentInput by remember { mutableStateOf("") }
@@ -64,9 +69,6 @@ fun WriteLetterScreen(navController: NavController) {
             // 옵션 선택 상태 관리
             var selectedWriters by remember { mutableStateOf(listOf<String>()) }
             var selectedFormats by remember { mutableStateOf(listOf<String>()) }
-
-            // 키보드 닫기 위한 focusManager
-            val focusManager = LocalFocusManager.current
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 ExpandableFilter(
@@ -131,6 +133,19 @@ fun WriteLetterScreen(navController: NavController) {
                             selectedWriters = emptyList()
                             selectedFormats = emptyList()
                             focusManager.clearFocus()
+
+                            // 서버로 전송
+                            OpenAiServer.sendRequestToServer(
+                                author = selectedWriters.joinToString(", "),
+                                documentType = selectedFormats.joinToString(", "),
+                                scenario = currentInput
+                            ) { result, error ->
+                                if (error != null) {
+                                    // 에러 처리
+                                } else {
+                                    // todo result를 UI에 출력하거나 후처리
+                                }
+                            }
                         }
                     }
                 ) {
@@ -175,7 +190,7 @@ fun WriteLetterScreen(navController: NavController) {
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                    Text("답변")
+                Text("답변")
 
             }
         }
@@ -340,4 +355,10 @@ fun ExpandableFilter(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun WriteLetterScreenPreview() {
+     WriteLetterScreen(navController = rememberNavController())
 }
