@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -47,23 +49,23 @@ import com.intel.papyrusbaby.AppBar
 @Composable
 fun WriteLetterScreen(navController: NavController) {
     AppBar(content = { paddingValues ->
+        // 단일 프롬프트 정보를 저장하는 상태 변수
+        var lastUserSelection by remember { mutableStateOf<UserSelect?>(null) }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFFFFAF3))
                 .padding(paddingValues)
         ) {
-            // 메시지 리스트 상태 관리
-            val messages = remember { mutableStateListOf<UserPrompt>() }
-            val style = remember { mutableStateListOf<SelectedOptions>() }
-
             // 현재 입력 텍스트 상태 관리
             var currentInput by remember { mutableStateOf("") }
 
+            // 옵션 선택 상태 관리
             var selectedWriters by remember { mutableStateOf(listOf<String>()) }
             var selectedFormats by remember { mutableStateOf(listOf<String>()) }
 
-            //키보드 닫기 위한 focusManager
+            // 키보드 닫기 위한 focusManager
             val focusManager = LocalFocusManager.current
 
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -79,7 +81,7 @@ fun WriteLetterScreen(navController: NavController) {
                         selectedWriters = if (selected) {
                             listOf(option) // 기존 선택 초기화 후 새 옵션만 추가
                         } else {
-                            emptyList()    // 선택 해제하면 빈 리스트로
+                            emptyList()    // 선택 해제 시 빈 리스트로
                         }
                     },
                     modifier = Modifier.weight(1f)
@@ -94,9 +96,9 @@ fun WriteLetterScreen(navController: NavController) {
                     selectedOptions = selectedFormats,
                     onOptionSelected = { option, selected ->
                         selectedFormats = if (selected) {
-                            listOf(option) // 기존 선택 초기화 후 새 옵션만 추가
+                            listOf(option)
                         } else {
-                            emptyList()    // 선택 해제하면 빈 리스트로
+                            emptyList()
                         }
                     },
                     modifier = Modifier.weight(1f)
@@ -118,57 +120,74 @@ fun WriteLetterScreen(navController: NavController) {
                 IconButton(
                     onClick = {
                         if (currentInput.isNotBlank()) {
-                            // 사용자의 메시지 추가
-                            messages.add(UserPrompt(text = currentInput, isUser = true))
-                            // TODO: 서버에 currentInput 전송 후 챗봇 응답 처리
-                            currentInput = ""
-                            style.add(
-                                SelectedOptions(
-                                    writer = selectedWriters.joinToString(", "),
-                                    type = selectedFormats.joinToString(", ")
-                                )
+                            // UserSelect 인스턴스 생성
+                            lastUserSelection = UserSelect(
+                                writer = selectedWriters.joinToString(", "),
+                                documentType = selectedFormats.joinToString(", "),
+                                prompt = currentInput
                             )
+                            // 입력값 및 선택값 초기화
+                            currentInput = ""
                             selectedWriters = emptyList()
                             selectedFormats = emptyList()
                             focusManager.clearFocus()
                         }
                     }
                 ) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "전송")
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "전송"
+                    )
                 }
             }
-            // 메시지 리스트 영역
-            LazyColumn(
+            // 출력 영역: UserSelect에 담긴 값들을 출력
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(8.dp)
             ) {
-                itemsIndexed(messages) { index, message ->
-                    ChatBubble(message = message)
-                    // 사용자의 메시지에 대한 스타일 정보가 있다면 출력
-                    if (index < style.size) {
-                        val selectedOption = style[index]
-                        Text(
-                            text = "작가: ${selectedOption.writer}",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1B1818),
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                        Text(
-                            text = "글 형식: ${selectedOption.type}",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1B1818),
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
+                lastUserSelection?.let { selection ->
+                    Text(
+                        text = "작가: ${selection.writer}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1B1818),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    Text(
+                        text = "글 형식: ${selection.documentType}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1B1818),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    Text(
+                        text = "프롬프트: ${selection.prompt}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF1B1818),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
                 }
-            }        }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                    Text("답변")
+
+            }
+        }
     }, navController = navController)
 }
 
+// 사용자 선택 정보를 담을 data class
+data class UserSelect(
+    val writer: String,
+    val documentType: String,
+    val prompt: String
+)
 
 @Composable
 fun ChatBubble(message: UserPrompt) {
