@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.intel.papyrusbaby.screen
 
 import android.util.Log
@@ -19,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -43,7 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.intel.papyrusbaby.AppBar
+import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.flask.OpenAiServer
 
 @Composable
@@ -208,7 +215,10 @@ fun WriteLetterScreen(navController: NavController) {
                 Text("답변")
                 if (isLoading) {
                     // TODO: 서버 응답까지 로딩 중임을 표시하는 UI
-                    CircularProgressIndicator()
+//                    CircularProgressIndicator()
+                    Box(modifier = Modifier.fillMaxSize(0.3f)) {
+                        LoadingAnimation()
+                    }
                 } else {
                     Text(
                         text = openAiResponse,
@@ -355,6 +365,19 @@ fun ExpandableFilter(
             }
         }
     }
+}
+
+@Composable
+fun LoadingAnimation() {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.animation_writing))
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever
+    )
+    LottieAnimation(
+        composition = composition,
+        progress = progress
+    )
 }
 
 @Preview(showBackground = true)

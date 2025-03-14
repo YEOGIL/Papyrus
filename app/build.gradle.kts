@@ -58,6 +58,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    // Lottie 애니메이션
+    implementation("com.airbnb.android:lottie-compose:6.6.2")
+
     // 네트워크 요청 (OkHttp & Retrofit)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
