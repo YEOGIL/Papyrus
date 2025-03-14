@@ -1,5 +1,6 @@
 package com.intel.papyrusbaby.screen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,27 +49,28 @@ import com.intel.papyrusbaby.flask.OpenAiServer
 fun WriteLetterScreen(navController: NavController) {
     // 키보드 닫기 위한 focusManager
     val focusManager = LocalFocusManager.current
-    val openAiResponse = ""
+
+    // 단일 프롬프트 정보를 저장하는 상태 변수
+    var lastUserSelection by remember { mutableStateOf<UserSelect?>(null) }
+
+    // 현재 입력 텍스트 상태 관리
+    var currentInput by remember { mutableStateOf("") }
+
+    // 옵션 선택 상태 관리
+    var selectedWriters by remember { mutableStateOf(listOf<String>()) }
+    var selectedFormats by remember { mutableStateOf(listOf<String>()) }
+
+    // 서버 응답을 표시하기 위한 상태 변수
+    var openAiResponse by remember { mutableStateOf("") }
 
     AppBar(content = { paddingValues ->
-        // 단일 프롬프트 정보를 저장하는 상태 변수
-        var lastUserSelection by remember { mutableStateOf<UserSelect?>(null) }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFFFFAF3))
-                .padding(paddingValues)
-                .pointerInput(Unit) {
-                    focusManager.clearFocus()
-                }
-        ) {
-            // 현재 입력 텍스트 상태 관리
-            var currentInput by remember { mutableStateOf("") }
-
-            // 옵션 선택 상태 관리
-            var selectedWriters by remember { mutableStateOf(listOf<String>()) }
-            var selectedFormats by remember { mutableStateOf(listOf<String>()) }
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFFFFAF3))
+            .padding(paddingValues)
+            .pointerInput(Unit) {
+                focusManager.clearFocus()
+            }) {
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 ExpandableFilter(
@@ -119,39 +121,46 @@ fun WriteLetterScreen(navController: NavController) {
                     onValueChange = { currentInput = it },
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(
-                    onClick = {
-                        if (currentInput.isNotBlank()) {
-                            // UserSelect 인스턴스 생성
-                            lastUserSelection = UserSelect(
-                                writer = selectedWriters.joinToString(", "),
-                                documentType = selectedFormats.joinToString(", "),
-                                prompt = currentInput
-                            )
-                            // 입력값 및 선택값 초기화
-                            currentInput = ""
-                            selectedWriters = emptyList()
-                            selectedFormats = emptyList()
-                            focusManager.clearFocus()
+                IconButton(onClick = {
+                    if (currentInput.isNotBlank()) {
+                        // 입력값을 지역 변수에 저장
+                        val authorInput = selectedWriters.joinToString(", ")
+                        val documentTypeInput = selectedFormats.joinToString(", ")
+                        val promptInput = currentInput
 
-                            // 서버로 전송
-                            OpenAiServer.sendRequestToServer(
-                                author = selectedWriters.joinToString(", "),
-                                documentType = selectedFormats.joinToString(", "),
-                                scenario = currentInput
-                            ) { result, error ->
-                                if (error != null) {
-                                    // 에러 처리
-                                } else {
-                                    // todo result를 UI에 출력하거나 후처리
-                                }
+                        // UserSelect 인스턴스 생성
+                        lastUserSelection = UserSelect(
+                            writer = authorInput,
+                            documentType = documentTypeInput,
+                            prompt = promptInput
+                        )
+
+                        // 서버로 전송
+                        OpenAiServer.sendRequestToServer(
+                            author = authorInput,
+                            documentType = documentTypeInput,
+                            scenario = promptInput
+                        ) { result, error ->
+                            if (error != null) {
+                                // 에러 처리
+                                // openAiResponse = "에러 발생: $error"
+                                Log.d("openAiResponse", "에러 발생: $error")
+                            } else {
+                                // result를 UI에 표시하기 위해 상태 변수에 저장
+                                openAiResponse = result ?: ""
                             }
                         }
+
+                        // 입력값 및 선택값 초기화
+                        currentInput = ""
+                        selectedWriters = emptyList()
+                        selectedFormats = emptyList()
+                        focusManager.clearFocus()
                     }
+                }
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "전송"
+                        imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "전송"
                     )
                 }
             }
@@ -191,7 +200,12 @@ fun WriteLetterScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text("답변")
-
+                Text(
+                    text = openAiResponse,
+                    fontSize = 16.sp,
+                    color = Color.Black,
+                    modifier = Modifier.padding(8.dp)
+                )
             }
         }
     }, navController = navController)
@@ -199,16 +213,13 @@ fun WriteLetterScreen(navController: NavController) {
 
 // 사용자 선택 정보를 담을 data class
 data class UserSelect(
-    val writer: String,
-    val documentType: String,
-    val prompt: String
+    val writer: String, val documentType: String, val prompt: String
 )
 
 @Composable
 fun ChatBubble(message: UserPrompt) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start
+        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start
     ) {
         Box(
             modifier = Modifier
@@ -228,16 +239,13 @@ fun ChatBubble(message: UserPrompt) {
 
 @Composable
 fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modifier: Modifier) {
-    BasicTextField(
-        value = currentInput,
+    BasicTextField(value = currentInput,
         onValueChange = onValueChange,
         modifier = modifier
             .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(4.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
         textStyle = TextStyle(
-            color = Color(0xFF1B1818),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
+            color = Color(0xFF1B1818), fontSize = 18.sp, fontWeight = FontWeight.SemiBold
         ),
         decorationBox = { innerTextField ->
             if (currentInput.isEmpty()) {
@@ -249,20 +257,17 @@ fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modi
                 )
             }
             innerTextField()
-        }
-    )
+        })
 }
 
 // Selected Style 클래스
 data class SelectedOptions(
-    val writer: String,
-    val type: String
+    val writer: String, val type: String
 )
 
 // 프롬프트 클래스
 data class UserPrompt(
-    val text: String,
-    val isUser: Boolean
+    val text: String, val isUser: Boolean
 )
 
 @Composable
@@ -282,18 +287,14 @@ fun ExpandableFilter(
             .border(width = 1.dp, color = Color(0xFFA4A4A4), shape = RoundedCornerShape(10.dp))
     ) {
         // 필터 탭 헤더: 클릭 시 DropdownMenu를 표시합니다.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = true }
-                .background(Color(0xFFFFFFFF))
-                .padding(horizontal = 10.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .background(Color(0xFFFFFFFF))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = title,
-                fontSize = 16.sp,
-                modifier = Modifier.weight(1f)
+                text = title, fontSize = 16.sp, modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -311,47 +312,35 @@ fun ExpandableFilter(
                 .fillMaxWidth()
                 .clip(
                     RoundedCornerShape(
-                        topStart = 0.dp,
-                        topEnd = 0.dp,
-                        bottomEnd = 10.dp,
-                        bottomStart = 10.dp
+                        topStart = 0.dp, topEnd = 0.dp, bottomEnd = 10.dp, bottomStart = 10.dp
                     )
                 )
                 .background(Color(0xFFF0F0F0))
                 .border(
-                    width = 0.5.dp,
-                    color = Color(0xFF777777),
-                    shape = RoundedCornerShape(
-                        bottomEnd = 10.dp,
-                        bottomStart = 10.dp
+                    width = 0.5.dp, color = Color(0xFF777777), shape = RoundedCornerShape(
+                        bottomEnd = 10.dp, bottomStart = 10.dp
                     )
                 )
         ) {
             options.forEach { option ->
-                DropdownMenuItem(
-                    onClick = {
-                        val currentlySelected = selectedOptions.contains(option)
-                        onOptionSelected(option, !currentlySelected)
-                        expanded = false
-                    },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedOptions.contains(option),
-                                onCheckedChange = { checked ->
-                                    onOptionSelected(option, checked)
-                                    expanded = false
-                                }
-                            )
-                            Text(
-                                text = option,
-                                modifier = Modifier.padding(start = 5.dp)
-                            )
-                        }
+                DropdownMenuItem(onClick = {
+                    val currentlySelected = selectedOptions.contains(option)
+                    onOptionSelected(option, !currentlySelected)
+                    expanded = false
+                }, text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(checked = selectedOptions.contains(option),
+                            onCheckedChange = { checked ->
+                                onOptionSelected(option, checked)
+                                expanded = false
+                            })
+                        Text(
+                            text = option, modifier = Modifier.padding(start = 5.dp)
+                        )
                     }
-                )
+                })
             }
         }
     }
@@ -360,5 +349,5 @@ fun ExpandableFilter(
 @Preview(showBackground = true)
 @Composable
 fun WriteLetterScreenPreview() {
-     WriteLetterScreen(navController = rememberNavController())
+    WriteLetterScreen(navController = rememberNavController())
 }

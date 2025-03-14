@@ -3,10 +3,6 @@ package com.intel.papyrusbaby
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -22,11 +18,11 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavHost(
                     navController = navController,
-                    startDestination ="home",
+                    startDestination = "home",
                     // if (viewmodel.profiles.isEmpty()) "main" else "profile",
                 ) {
-                    composable("home") {HomeScreen(navController)}
-                    composable("write") {WriteLetterScreen(navController)}
+                    composable("home") { HomeScreen(navController) }
+                    composable("write") { WriteLetterScreen(navController) }
                 }
             }
         }
