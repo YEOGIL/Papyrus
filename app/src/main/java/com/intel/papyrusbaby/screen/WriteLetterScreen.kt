@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -61,6 +62,9 @@ fun WriteLetterScreen(navController: NavController) {
 
             var selectedWriters by remember { mutableStateOf(listOf<String>()) }
             var selectedFormats by remember { mutableStateOf(listOf<String>()) }
+
+            //키보드 닫기 위한 focusManager
+            val focusManager = LocalFocusManager.current
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 ExpandableFilter(
@@ -126,6 +130,7 @@ fun WriteLetterScreen(navController: NavController) {
                             )
                             selectedWriters = emptyList()
                             selectedFormats = emptyList()
+                            focusManager.clearFocus()
                         }
                     }
                 ) {
