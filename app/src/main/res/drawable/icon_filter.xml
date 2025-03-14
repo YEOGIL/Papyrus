@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="32.144733dp" android:viewportHeight="220.47" android:viewportWidth="308.64" android:width="45dp">
+      
+    <path android:fillColor="#5c5945" android:pathData="M133.35,42.29H59.44a5.87,5.87 0,1 0,0 11.74h73.91Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M62.5,107.63H59.44a5.87,5.87 0,0 0,-5.88 5.87h0a5.87,5.87 0,0 0,5.88 5.87H76.16V107.63Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M248.63,107.63H145.31v11.74H248.63a5.87,5.87 0,0 0,0 -11.74Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M249.2,166.43H232.31v11.75H249.2a5.87,5.87 0,0 0,5.87 -5.87h0A5.87,5.87 0,0 0,249.2 166.43Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M62.5,166.43H59.1v0a5.88,5.88 0,0 0,-5.54 5.86h0a5.87,5.87 0,0 0,5.54 5.85v0H162.33V166.43Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M254.5,48.16a5.86,5.86 0,0 0,-5.23 -5.83v0H202.42V54h46.85v0A5.87,5.87 0,0 0,254.5 48.16Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M168.52,76.1a27.94,27.94 0,1 1,27.93 -27.94A28,28 0,0 1,168.52 76.1ZM168.52,30.23a17.94,17.94 0,1 0,17.93 17.93A18,18 0,0 0,168.52 30.23Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M110.73,141.43a27.94,27.94 0,1 1,27.94 -27.93A28,28 0,0 1,110.73 141.43ZM110.73,95.56a17.94,17.94 0,1 0,17.94 17.94A18,18 0,0 0,110.73 95.56Z"/>
+      
+    <path android:fillColor="#5c5945" android:pathData="M197.32,200.24a27.94,27.94 0,1 1,27.94 -27.93A28,28 0,0 1,197.32 200.24ZM197.32,154.37a17.94,17.94 0,1 0,17.94 17.94A18,18 0,0 0,197.32 154.37Z"/>
+      
+    <path android:fillColor="#94907f" android:pathData="M227.34,220.47H81.3A81.39,81.39 0,0 1,0 139.17V81.3A81.39,81.39 0,0 1,81.3 0h146a81.39,81.39 0,0 1,81.3 81.3v57.87A81.39,81.39 0,0 1,227.34 220.47ZM81.3,6A75.39,75.39 0,0 0,6 81.3v57.87a75.39,75.39 0,0 0,75.3 75.3h146a75.39,75.39 0,0 0,75.3 -75.3V81.3A75.39,75.39 0,0 0,227.34 6Z"/>
+    
+</vector>

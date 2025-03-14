@@ -6,13 +6,17 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -37,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -75,12 +80,12 @@ fun WriteLetterScreen(navController: NavController) {
     AppBar(content = { paddingValues ->
         Column(modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFFAF3))
+            .background(Color(0xFFFFFAE6))
             .padding(paddingValues)
             .pointerInput(Unit) {
                 focusManager.clearFocus()
             }) {
-
+            Spacer(modifier = Modifier.height(20.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 ExpandableFilter(
                     title = if (selectedWriters.isNotEmpty()) {
@@ -103,7 +108,7 @@ fun WriteLetterScreen(navController: NavController) {
                     title = if (selectedFormats.isNotEmpty()) {
                         selectedFormats.joinToString(", ")
                     } else {
-                        "글 형식"
+                        "편지 종류"
                     },
                     options = listOf("일기", "편지", "반성문", "단문", "엽서"),
                     selectedOptions = selectedFormats,
@@ -117,11 +122,33 @@ fun WriteLetterScreen(navController: NavController) {
                     modifier = Modifier.weight(1f)
                 )
             }
+            Spacer(modifier = Modifier.size(10.dp))
+            val  docType = listOf("결혼", "출산", "입학", "합격", "실패", "졸업", "군입대", "환갑", "상견례", "크리스마스", "삼일절", "광복절", "개천절", "부활절", "개업")
+            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                Spacer(modifier = Modifier.size(10.dp))
+                docType.forEach{ writer ->
+                    Text(
+                        text = writer,
+                        color = Color(0xFF5C5945),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .border(
+                                1.dp,
+                                shape = RoundedCornerShape(5.dp),
+                                color = Color(0xFF94907F)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 5.dp))
+                    Spacer(modifier = Modifier.size(10.dp))
+                }
+                Spacer(modifier = Modifier.size(10.dp))
+            }
+            Spacer(modifier = Modifier.size(20.dp))
+
             // 프롬프트 입력 영역
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFFFFFFF))
                     .padding(horizontal = 10.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -173,7 +200,9 @@ fun WriteLetterScreen(navController: NavController) {
                 }
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "전송"
+                        painter = painterResource(R.drawable.icon_writeletter),
+                        tint = Color.Unspecified,
+                        contentDescription = "전송"
                     )
                 }
             }
@@ -181,7 +210,7 @@ fun WriteLetterScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
+                    .padding(horizontal = 8.dp)
             ) {
                 lastUserSelection?.let { selection ->
                     Text(
@@ -212,19 +241,21 @@ fun WriteLetterScreen(navController: NavController) {
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Text("답변")
                 if (isLoading) {
                     // TODO: 서버 응답까지 로딩 중임을 표시하는 UI
-//                    CircularProgressIndicator()
-                    Box(modifier = Modifier.fillMaxSize(0.3f)) {
+                    Box(modifier = Modifier.fillMaxSize(0.6f)) {
                         LoadingAnimation()
                     }
                 } else {
                     Text(
                         text = openAiResponse,
                         fontSize = 16.sp,
-                        color = Color.Black,
-                        modifier = Modifier.padding(8.dp)
+                        color = Color(0xFF221F10),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
+                            .padding(20.dp)
                     )
                 }
             }
@@ -238,58 +269,27 @@ data class UserSelect(
 )
 
 @Composable
-fun ChatBubble(message: UserPrompt) {
-    Row(
-        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start
-    ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xFFEBFFFE))
-                .padding(12.dp)
-        ) {
-            Text(
-                text = message.text,
-                color = Color(0xFF1B1818),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp
-            )
-        }
-    }
-}
-
-@Composable
 fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modifier: Modifier) {
     BasicTextField(value = currentInput,
         onValueChange = onValueChange,
         modifier = modifier
-            .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(4.dp))
+            .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(10.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
         textStyle = TextStyle(
-            color = Color(0xFF1B1818), fontSize = 18.sp, fontWeight = FontWeight.SemiBold
+            color = Color(0xFF5C5945), fontSize = 18.sp, fontWeight = FontWeight.Bold
         ),
         decorationBox = { innerTextField ->
             if (currentInput.isEmpty()) {
                 Text(
-                    text = "상세 내용을 입력하세요",
-                    color = Color.Gray,
+                    text = "상세 내용을 입력하세요.",
+                    color = Color(0xFF5C5945),
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold
                 )
             }
             innerTextField()
         })
 }
-
-// Selected Style 클래스
-data class SelectedOptions(
-    val writer: String, val type: String
-)
-
-// 프롬프트 클래스
-data class UserPrompt(
-    val text: String, val isUser: Boolean
-)
 
 @Composable
 fun ExpandableFilter(
@@ -304,23 +304,26 @@ fun ExpandableFilter(
     Box(
         modifier = modifier
             .padding(vertical = 5.dp, horizontal = 10.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .border(width = 1.dp, color = Color(0xFFA4A4A4), shape = RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .border(width = 1.dp, color = Color(0xFF94907F), shape = RoundedCornerShape(20.dp))
     ) {
         // 필터 탭 헤더: 클릭 시 DropdownMenu를 표시합니다.
         Row(modifier = Modifier
             .fillMaxWidth()
             .clickable { expanded = true }
-            .background(Color(0xFFFFFFFF))
+//            .background(Color(0xFFFFFFFF))
             .padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = title, fontSize = 16.sp, modifier = Modifier.weight(1f)
+                text = title,
+                fontSize = 16.sp,
+                color = Color(0xFF5C5945),
+                modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Expand",
-                tint = Color(0xFFA4A4A4)
+                tint = Color(0xFF5C5945)
             )
         }
 

@@ -2,6 +2,7 @@ package com.intel.papyrusbaby.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -17,8 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,28 +48,53 @@ fun HomeScreen(navController: NavController) {
                 .padding(paddingValues)
         ) {
             Spacer(modifier = Modifier.size(30.dp))
-
-            // Card with description
-            Card(
-                modifier = Modifier
-                    .size(width = 200.dp, height = 100.dp)
-                    .align(Alignment.CenterHorizontally),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "편지는 사람이 남길 수 있는 가장 중요한 기념물이다",
-                        textAlign = TextAlign.Center
-                    )
-                }
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 50.dp)){
+                Icon(
+                    painter = painterResource(id = R.drawable.icon_quotationmark),
+                    contentDescription = "papyrusLogo",
+                    tint = Color.Unspecified
+                )
+                Spacer(modifier = Modifier.size(30.dp))
+                Text(
+                    text = "편지를 교환하지 않는\n" +
+                            "사람들은\n" + "서로에 대해 모른다.",
+                    color = Color(0xFF5C5945),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Spacer(modifier = Modifier.size(30.dp))
+                Text(
+                    text = "콘스탄틴 로디브\n" +
+                            "(러시아의 작가/철학자)",
+                    color = Color(0xFF5C5945),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.align(Alignment.End)
+                )
             }
-
-            Spacer(modifier = Modifier.size(50.dp))
-
+            Spacer(modifier = Modifier.size(70.dp))
+val  writerType = listOf("작가", "대통령", "재외동포 박현진", "시인", "철학자", "정치인", "과학자", "가수", "교장선생님")
+            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                Spacer(modifier = Modifier.size(10.dp))
+                writerType.forEach{ writer ->
+                    Text(
+                        text = writer,
+                        color = Color(0xFF5C5945),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .border(
+                                1.dp,
+                                shape = RoundedCornerShape(5.dp),
+                                color = Color(0xFF94907F)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 5.dp))
+                    Spacer(modifier = Modifier.size(10.dp))
+                }
+                Spacer(modifier = Modifier.size(10.dp))
+            }
             // Row with horizontal scrolling and spacing between PersonBox
             Row(
                 modifier = Modifier
@@ -76,7 +104,7 @@ fun HomeScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 PersonCategory.getAll().forEach { category ->
-                    PersonBox(category,navController)
+                    PersonBox(category, navController)
                 }
             }
         }
@@ -86,11 +114,14 @@ fun HomeScreen(navController: NavController) {
 @Composable
 fun PersonBox(person: PersonCategory, navController: NavController) {
     Box(
-        modifier = Modifier.fillMaxWidth()
-            .clickable {  navController.navigate("write") {
-                launchSingleTop = true
-                popUpTo("home")
-            }  },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                navController.navigate("write") {
+                    launchSingleTop = true
+                    popUpTo("home")
+                }
+            },
         contentAlignment = Alignment.Center
 
     ) {
@@ -121,7 +152,8 @@ fun PersonBox(person: PersonCategory, navController: NavController) {
                 person.description,
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
                     .padding(10.dp)
             )
         }

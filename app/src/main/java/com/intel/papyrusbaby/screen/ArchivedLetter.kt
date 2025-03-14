@@ -37,7 +37,7 @@ fun ArchivedLetterScreen(navController: NavController) {
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFFFFAF3))
+                .background(Color(0xFFFFFAE6))
                 .padding(paddingValues)
         ) {
             Text("Archived")}
