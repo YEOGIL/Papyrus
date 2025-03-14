@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -61,6 +62,7 @@ fun WriteLetterScreen(navController: NavController) {
     var selectedFormats by remember { mutableStateOf(listOf<String>()) }
 
     // 서버 응답을 표시하기 위한 상태 변수
+    var isLoading by remember { mutableStateOf(false) }
     var openAiResponse by remember { mutableStateOf("") }
 
     AppBar(content = { paddingValues ->
@@ -123,6 +125,9 @@ fun WriteLetterScreen(navController: NavController) {
                 )
                 IconButton(onClick = {
                     if (currentInput.isNotBlank()) {
+                        openAiResponse = ""
+                        isLoading = true
+
                         // 입력값을 지역 변수에 저장
                         val authorInput = selectedWriters.joinToString(", ")
                         val documentTypeInput = selectedFormats.joinToString(", ")
@@ -141,6 +146,7 @@ fun WriteLetterScreen(navController: NavController) {
                             documentType = documentTypeInput,
                             scenario = promptInput
                         ) { result, error ->
+                            isLoading = false
                             if (error != null) {
                                 // 에러 처리
                                 // openAiResponse = "에러 발생: $error"
@@ -200,12 +206,17 @@ fun WriteLetterScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text("답변")
-                Text(
-                    text = openAiResponse,
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    modifier = Modifier.padding(8.dp)
-                )
+                if (isLoading) {
+                    // TODO: 서버 응답까지 로딩 중임을 표시하는 UI
+                    CircularProgressIndicator()
+                } else {
+                    Text(
+                        text = openAiResponse,
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
             }
         }
     }, navController = navController)
