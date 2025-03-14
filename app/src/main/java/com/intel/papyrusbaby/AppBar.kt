@@ -110,7 +110,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                             onClick = {
                                 navController.navigate("home") {
                                     launchSingleTop = true
-                                    popUpTo("home")
+//                                    popUpTo("home")
                                 }
                             },
                         ) {
@@ -124,7 +124,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                             onClick = {
                                 navController.navigate("write") {
                                     launchSingleTop = true
-                                    popUpTo("home")
+//                                    popUpTo("home")
                                 }
                             },
                         ) {
@@ -135,7 +135,10 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                             )
                         }
                         IconButton(
-                            onClick = {},
+                            onClick = {navController.navigate("archive") {
+                                launchSingleTop = true
+//                                popUpTo("home")
+                            }},
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.icon_draft),
