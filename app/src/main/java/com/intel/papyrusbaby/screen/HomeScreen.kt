@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,84 +31,82 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.intel.papyrusbaby.AppBar
 import com.intel.papyrusbaby.PersonCategory
 import com.intel.papyrusbaby.R
 
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    AppBar(content = { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFfffae6))
-                .padding(paddingValues)
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFfffae6))
+    ) {
+        Spacer(modifier = Modifier.size(30.dp))
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 50.dp)) {
+            Icon(
+                painter = painterResource(id = R.drawable.icon_quotationmark),
+                contentDescription = "papyrusLogo",
+                tint = Color.Unspecified
+            )
             Spacer(modifier = Modifier.size(30.dp))
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 50.dp)){
-                Icon(
-                    painter = painterResource(id = R.drawable.icon_quotationmark),
-                    contentDescription = "papyrusLogo",
-                    tint = Color.Unspecified
-                )
-                Spacer(modifier = Modifier.size(30.dp))
+            Text(
+                text = "편지를 교환하지 않는\n" +
+                        "사람들은\n" + "서로에 대해 모른다.",
+                color = Color(0xFF5C5945),
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.size(30.dp))
+            Text(
+                text = "콘스탄틴 로디브\n" +
+                        "(러시아의 작가/철학자)",
+                color = Color(0xFF5C5945),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                textAlign = TextAlign.End,
+                modifier = Modifier.align(Alignment.End)
+            )
+        }
+        Spacer(modifier = Modifier.size(70.dp))
+        val writerType = listOf("작가", "대통령", "재외동포 박현진", "시인", "철학자", "정치인", "과학자", "가수", "교장선생님")
+        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            Spacer(modifier = Modifier.size(10.dp))
+            writerType.forEach { writer ->
                 Text(
-                    text = "편지를 교환하지 않는\n" +
-                            "사람들은\n" + "서로에 대해 모른다.",
+                    text = writer,
                     color = Color(0xFF5C5945),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                Spacer(modifier = Modifier.size(30.dp))
-                Text(
-                    text = "콘스탄틴 로디브\n" +
-                            "(러시아의 작가/철학자)",
-                    color = Color(0xFF5C5945),
-                    fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.align(Alignment.End)
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .border(
+                            1.dp,
+                            shape = RoundedCornerShape(5.dp),
+                            color = Color(0xFF94907F)
+                        )
+                        .clickable {}
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
                 )
-            }
-            Spacer(modifier = Modifier.size(70.dp))
-val  writerType = listOf("작가", "대통령", "재외동포 박현진", "시인", "철학자", "정치인", "과학자", "가수", "교장선생님")
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                Spacer(modifier = Modifier.size(10.dp))
-                writerType.forEach{ writer ->
-                    Text(
-                        text = writer,
-                        color = Color(0xFF5C5945),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .border(
-                                1.dp,
-                                shape = RoundedCornerShape(5.dp),
-                                color = Color(0xFF94907F)
-                            )
-                            .clickable{}
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
-                    Spacer(modifier = Modifier.size(10.dp))
-                }
                 Spacer(modifier = Modifier.size(10.dp))
             }
-            // Row with horizontal scrolling and spacing between PersonBox
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(30.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                PersonCategory.getAll().forEach { category ->
-                    PersonBox(category, navController)
-                }
+            Spacer(modifier = Modifier.size(10.dp))
+        }
+        // Row with horizontal scrolling and spacing between PersonBox
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(30.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            PersonCategory.getAll().forEach { category ->
+                PersonBox(category, navController)
             }
         }
-    }, navController = navController)
+    }
 }
 
 @Composable

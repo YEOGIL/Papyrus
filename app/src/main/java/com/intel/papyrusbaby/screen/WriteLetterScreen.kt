@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -54,7 +52,6 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.intel.papyrusbaby.AppBar
 import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.flask.OpenAiServer
 
@@ -77,193 +74,210 @@ fun WriteLetterScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var openAiResponse by remember { mutableStateOf("") }
 
-    AppBar(content = { paddingValues ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFFFAE6))
-            .padding(paddingValues)
-            .pointerInput(Unit) {
-                focusManager.clearFocus()
-            }) {
-            Spacer(modifier = Modifier.height(20.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                ExpandableFilter(
-                    title = if (selectedWriters.isNotEmpty()) {
-                        selectedWriters.joinToString(", ")
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .background(Color(0xFFFFFAE6))
+        .pointerInput(Unit) {
+            focusManager.clearFocus()
+        }) {
+        Spacer(modifier = Modifier.height(20.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            ExpandableFilter(
+                title = if (selectedWriters.isNotEmpty()) {
+                    selectedWriters.joinToString(", ")
+                } else {
+                    "작가"
+                },
+                options = listOf("윤동주", "김소월", "셰익스피어", "찰스 디킨스", "한강"),
+                selectedOptions = selectedWriters,
+                onOptionSelected = { option, selected ->
+                    selectedWriters = if (selected) {
+                        listOf(option) // 기존 선택 초기화 후 새 옵션만 추가
                     } else {
-                        "작가"
-                    },
-                    options = listOf("윤동주", "김소월", "셰익스피어", "찰스 디킨스", "한강"),
-                    selectedOptions = selectedWriters,
-                    onOptionSelected = { option, selected ->
-                        selectedWriters = if (selected) {
-                            listOf(option) // 기존 선택 초기화 후 새 옵션만 추가
-                        } else {
-                            emptyList()    // 선택 해제 시 빈 리스트로
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                ExpandableFilter(
-                    title = if (selectedFormats.isNotEmpty()) {
-                        selectedFormats.joinToString(", ")
+                        emptyList()    // 선택 해제 시 빈 리스트로
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            )
+            ExpandableFilter(
+                title = if (selectedFormats.isNotEmpty()) {
+                    selectedFormats.joinToString(", ")
+                } else {
+                    "편지 종류"
+                },
+                options = listOf("일기", "편지", "반성문", "단문", "엽서"),
+                selectedOptions = selectedFormats,
+                onOptionSelected = { option, selected ->
+                    selectedFormats = if (selected) {
+                        listOf(option)
                     } else {
-                        "편지 종류"
-                    },
-                    options = listOf("일기", "편지", "반성문", "단문", "엽서"),
-                    selectedOptions = selectedFormats,
-                    onOptionSelected = { option, selected ->
-                        selectedFormats = if (selected) {
-                            listOf(option)
-                        } else {
-                            emptyList()
-                        }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
+                        emptyList()
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(modifier = Modifier.size(10.dp))
+        val docType = listOf(
+            "결혼",
+            "출산",
+            "입학",
+            "합격",
+            "실패",
+            "졸업",
+            "군입대",
+            "환갑",
+            "상견례",
+            "크리스마스",
+            "삼일절",
+            "광복절",
+            "개천절",
+            "부활절",
+            "개업"
+        )
+        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            Spacer(modifier = Modifier.size(10.dp))
+            Icon(
+                painter = painterResource(id = R.drawable.icon_filter),
+                contentDescription = "themeFilter",
+                tint = Color.Unspecified,
+                modifier = Modifier.clickable {})
+            Spacer(modifier = Modifier.size(10.dp))
+            docType.forEach { writer ->
+                Text(
+                    text = writer,
+                    color = Color(0xFF5C5945),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .border(
+                            1.dp,
+                            shape = RoundedCornerShape(5.dp),
+                            color = Color(0xFF94907F)
+                        )
+                        .clickable {}
+                        .padding(horizontal = 10.dp, vertical = 5.dp))
+                Spacer(modifier = Modifier.size(10.dp))
             }
             Spacer(modifier = Modifier.size(10.dp))
-            val  docType = listOf("결혼", "출산", "입학", "합격", "실패", "졸업", "군입대", "환갑", "상견례", "크리스마스", "삼일절", "광복절", "개천절", "부활절", "개업")
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-                Spacer(modifier = Modifier.size(10.dp))
-                Icon(painter = painterResource(id = R.drawable.icon_filter), contentDescription = "themeFilter", tint = Color.Unspecified, modifier = Modifier.clickable{})
-                Spacer(modifier = Modifier.size(10.dp))
-                docType.forEach{ writer ->
-                    Text(
-                        text = writer,
-                        color = Color(0xFF5C5945),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .border(
-                                1.dp,
-                                shape = RoundedCornerShape(5.dp),
-                                color = Color(0xFF94907F)
-                            )
-                            .clickable{}
-                            .padding(horizontal = 10.dp, vertical = 5.dp))
-                    Spacer(modifier = Modifier.size(10.dp))
-                }
-                Spacer(modifier = Modifier.size(10.dp))
-            }
-            Spacer(modifier = Modifier.size(20.dp))
+        }
+        Spacer(modifier = Modifier.size(20.dp))
 
-            // 프롬프트 입력 영역
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CustomInputField(
-                    currentInput = currentInput,
-                    onValueChange = { currentInput = it },
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = {
-                    if (currentInput.isNotBlank()) {
-                        openAiResponse = ""
-                        isLoading = true
+        // 프롬프트 입력 영역
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CustomInputField(
+                currentInput = currentInput,
+                onValueChange = { currentInput = it },
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = {
+                if (currentInput.isNotBlank()) {
+                    openAiResponse = ""
+                    isLoading = true
 
-                        // 입력값을 지역 변수에 저장
-                        val authorInput = selectedWriters.joinToString(", ")
-                        val documentTypeInput = selectedFormats.joinToString(", ")
-                        val promptInput = currentInput
+                    // 입력값을 지역 변수에 저장
+                    val authorInput = selectedWriters.joinToString(", ")
+                    val documentTypeInput = selectedFormats.joinToString(", ")
+                    val promptInput = currentInput
 
-                        // UserSelect 인스턴스 생성
-                        lastUserSelection = UserSelect(
-                            writer = authorInput,
-                            documentType = documentTypeInput,
-                            prompt = promptInput
-                        )
+                    // UserSelect 인스턴스 생성
+                    lastUserSelection = UserSelect(
+                        writer = authorInput,
+                        documentType = documentTypeInput,
+                        prompt = promptInput
+                    )
 
-                        // 서버로 전송
-                        OpenAiServer.sendRequestToServer(
-                            author = authorInput,
-                            documentType = documentTypeInput,
-                            scenario = promptInput
-                        ) { result, error ->
-                            isLoading = false
-                            if (error != null) {
-                                // 에러 처리
-                                // openAiResponse = "에러 발생: $error"
-                                Log.d("openAiResponse", "에러 발생: $error")
-                            } else {
-                                // result를 UI에 표시하기 위해 상태 변수에 저장
-                                openAiResponse = result ?: ""
-                            }
+                    // 서버로 전송
+                    OpenAiServer.sendRequestToServer(
+                        author = authorInput,
+                        documentType = documentTypeInput,
+                        scenario = promptInput
+                    ) { result, error ->
+                        isLoading = false
+                        if (error != null) {
+                            // 에러 처리
+                            // openAiResponse = "에러 발생: $error"
+                            Log.d("openAiResponse", "에러 발생: $error")
+                        } else {
+                            // result를 UI에 표시하기 위해 상태 변수에 저장
+                            openAiResponse = result ?: ""
                         }
+                    }
 
-                        // 입력값 및 선택값 초기화
-                        currentInput = ""
-                        selectedWriters = emptyList()
-                        selectedFormats = emptyList()
-                        focusManager.clearFocus()
-                    }
-                }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.icon_writeletter),
-                        tint = Color.Unspecified,
-                        contentDescription = "전송"
-                    )
+                    // 입력값 및 선택값 초기화
+                    currentInput = ""
+                    selectedWriters = emptyList()
+                    selectedFormats = emptyList()
+                    focusManager.clearFocus()
                 }
             }
-            // 출력 영역: UserSelect에 담긴 값들을 출력
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
             ) {
-                lastUserSelection?.let { selection ->
-                    Text(
-                        text = "작가: ${selection.writer}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1B1818),
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    Text(
-                        text = "글 형식: ${selection.documentType}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1B1818),
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    Text(
-                        text = "프롬프트: ${selection.prompt}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1B1818),
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                if (isLoading) {
-                    // TODO: 서버 응답까지 로딩 중임을 표시하는 UI
-                    Box(modifier = Modifier.fillMaxSize(0.6f)) {
-                        LoadingAnimation()
-                    }
-                } else {
-                    Text(
-                        text = openAiResponse,
-                        fontSize = 16.sp,
-                        color = Color(0xFF221F10),
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
-                            .padding(20.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.icon_writeletter),
+                    tint = Color.Unspecified,
+                    contentDescription = "전송"
+                )
             }
         }
-    }, navController = navController)
+        // 출력 영역: UserSelect에 담긴 값들을 출력
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        ) {
+            lastUserSelection?.let { selection ->
+                Text(
+                    text = "작가: ${selection.writer}",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1B1818),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                Text(
+                    text = "글 형식: ${selection.documentType}",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1B1818),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                Text(
+                    text = "프롬프트: ${selection.prompt}",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1B1818),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            if (isLoading) {
+                // TODO: 서버 응답까지 로딩 중임을 표시하는 UI
+                Box(modifier = Modifier.fillMaxSize(0.6f)) {
+                    LoadingAnimation()
+                }
+            } else {
+                Text(
+                    text = openAiResponse,
+                    fontSize = 16.sp,
+                    color = Color(0xFF221F10),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
+                        .padding(20.dp)
+                )
+            }
+        }
+    }
 }
 
 // 사용자 선택 정보를 담을 data class
