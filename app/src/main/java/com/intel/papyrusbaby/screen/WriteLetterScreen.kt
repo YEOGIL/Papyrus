@@ -54,6 +54,9 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.flask.OpenAiServer
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun WriteLetterScreen(navController: NavController) {
@@ -231,6 +234,16 @@ fun WriteLetterScreen(navController: NavController) {
                 .padding(horizontal = 8.dp)
         ) {
             lastUserSelection?.let { selection ->
+                val currentDate = remember {
+                    SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault()).format(Date())
+                }
+                Text(
+                    text = "작성일 : $currentDate",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1B1818),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
                 Text(
                     text = "작가: ${selection.writer}",
                     fontSize = 14.sp,
@@ -246,7 +259,7 @@ fun WriteLetterScreen(navController: NavController) {
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 Text(
-                    text = "프롬프트: ${selection.prompt}",
+                    text = "상세 내용: ${selection.prompt}",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF1B1818),
