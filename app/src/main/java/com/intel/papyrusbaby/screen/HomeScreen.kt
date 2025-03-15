@@ -90,7 +90,9 @@ val  writerType = listOf("작가", "대통령", "재외동포 박현진", "시�
                                 shape = RoundedCornerShape(5.dp),
                                 color = Color(0xFF94907F)
                             )
-                            .padding(horizontal = 10.dp, vertical = 5.dp))
+                            .clickable{}
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
                     Spacer(modifier = Modifier.size(10.dp))
                 }
                 Spacer(modifier = Modifier.size(10.dp))
@@ -119,7 +121,6 @@ fun PersonBox(person: PersonCategory, navController: NavController) {
             .clickable {
                 navController.navigate("write") {
                     launchSingleTop = true
-                    popUpTo("home")
                 }
             },
         contentAlignment = Alignment.Center
@@ -150,6 +151,14 @@ fun PersonBox(person: PersonCategory, navController: NavController) {
             )
             Text(
                 person.description,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(10.dp)
+            )
+            Text(
+                person.tags.joinToString(" "),
                 fontSize = 12.sp,
                 lineHeight = 16.sp,
                 modifier = Modifier

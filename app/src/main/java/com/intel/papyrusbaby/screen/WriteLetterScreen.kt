@@ -126,6 +126,8 @@ fun WriteLetterScreen(navController: NavController) {
             val  docType = listOf("결혼", "출산", "입학", "합격", "실패", "졸업", "군입대", "환갑", "상견례", "크리스마스", "삼일절", "광복절", "개천절", "부활절", "개업")
             Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                 Spacer(modifier = Modifier.size(10.dp))
+                Icon(painter = painterResource(id = R.drawable.icon_filter), contentDescription = "themeFilter", tint = Color.Unspecified, modifier = Modifier.clickable{})
+                Spacer(modifier = Modifier.size(10.dp))
                 docType.forEach{ writer ->
                     Text(
                         text = writer,
@@ -138,6 +140,7 @@ fun WriteLetterScreen(navController: NavController) {
                                 shape = RoundedCornerShape(5.dp),
                                 color = Color(0xFF94907F)
                             )
+                            .clickable{}
                             .padding(horizontal = 10.dp, vertical = 5.dp))
                     Spacer(modifier = Modifier.size(10.dp))
                 }
