@@ -73,6 +73,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .background(Color(0xFFfffae6))
                             .padding(top = 10.dp)
                             .padding(horizontal = 10.dp)
                     ) {
@@ -107,6 +108,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .background(Color(0xFFfffae6))
                             .padding(horizontal = 25.dp, vertical = 10.dp),
                     ) {
                         Icon(
