@@ -8,9 +8,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.intel.papyrusbaby.screen.ArchivedLetterScreen
 import com.intel.papyrusbaby.screen.HomeScreen
 import com.intel.papyrusbaby.screen.WriteLetterScreen
+import com.intel.papyrusbaby.screen.WrittenLetterScreen
 import com.intel.papyrusbaby.ui.theme.PapyrusBabyTheme
 
 class MainActivity : ComponentActivity() {
@@ -27,6 +29,25 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("home") { HomeScreen(navController) }
                         composable("write") { WriteLetterScreen(navController) }
+                        composable(
+                            route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}",
+                            arguments = listOf(
+                                navArgument("writer") { defaultValue = "" },
+                                navArgument("documentType") { defaultValue = "" },
+                                navArgument("prompt") { defaultValue = "" }
+                            )
+                        ) { backStackEntry ->
+                            val writer = backStackEntry.arguments?.getString("writer") ?: ""
+                            val documentType =
+                                backStackEntry.arguments?.getString("documentType") ?: ""
+                            val prompt = backStackEntry.arguments?.getString("prompt") ?: ""
+                            WrittenLetterScreen(
+                                writer = writer,
+                                documentType = documentType,
+                                prompt = prompt,
+                                navController = navController
+                            )
+                        }
                         composable("archive") { ArchivedLetterScreen(navController) }
                     }
                 }, navController = navController)

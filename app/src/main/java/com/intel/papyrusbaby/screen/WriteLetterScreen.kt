@@ -2,7 +2,6 @@
 
 package com.intel.papyrusbaby.screen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Checkbox
@@ -47,24 +45,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.intel.papyrusbaby.R
-import com.intel.papyrusbaby.flask.OpenAiServer
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.net.URLEncoder
 
 @Composable
 fun WriteLetterScreen(navController: NavController) {
     // 키보드 닫기 위한 focusManager
     val focusManager = LocalFocusManager.current
 
-    // 단일 프롬프트 정보를 저장하는 상태 변수
-    var lastUserSelection by remember { mutableStateOf<UserSelect?>(null) }
 
     // 현재 입력 텍스트 상태 관리
     var currentInput by remember { mutableStateOf("") }
@@ -188,35 +176,21 @@ fun WriteLetterScreen(navController: NavController) {
                     val documentTypeInput = selectedFormats.joinToString(", ")
                     val promptInput = currentInput
 
-                    // UserSelect 인스턴스 생성
-                    lastUserSelection = UserSelect(
-                        writer = authorInput,
-                        documentType = documentTypeInput,
-                        prompt = promptInput
-                    )
+// URL 인코딩 (전달 시 특수문자 문제 방지)
+                    val encodedAuthor = URLEncoder.encode(authorInput, "UTF-8")
+                    val encodedDocType = URLEncoder.encode(documentTypeInput, "UTF-8")
+                    val encodedPrompt = URLEncoder.encode(promptInput, "UTF-8")
 
-                    // 서버로 전송
-                    OpenAiServer.sendRequestToServer(
-                        author = authorInput,
-                        documentType = documentTypeInput,
-                        scenario = promptInput
-                    ) { result, error ->
-                        isLoading = false
-                        if (error != null) {
-                            // 에러 처리
-                            // openAiResponse = "에러 발생: $error"
-                            Log.d("openAiResponse", "에러 발생: $error")
-                        } else {
-                            // result를 UI에 표시하기 위해 상태 변수에 저장
-                            openAiResponse = result ?: ""
-                        }
-                    }
 
                     // 입력값 및 선택값 초기화
                     currentInput = ""
                     selectedWriters = emptyList()
                     selectedFormats = emptyList()
                     focusManager.clearFocus()
+
+                    // WrittenLetterScreen으로 이동하며 인자 전달
+                    navController.navigate("writtenLetter?writer=$encodedAuthor&documentType=$encodedDocType&prompt=$encodedPrompt")
+
                 }
             }
             ) {
@@ -227,69 +201,7 @@ fun WriteLetterScreen(navController: NavController) {
                 )
             }
         }
-        // 출력 영역: UserSelect에 담긴 값들을 출력
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-        ) {
-            lastUserSelection?.let { selection ->
-                val currentDate = remember {
-                    SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault()).format(Date())
-                }
-                Text(
-                    text = "작성일 : $currentDate",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1B1818),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                Text(
-                    text = "작가: ${selection.writer}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1B1818),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                Text(
-                    text = "글 형식: ${selection.documentType}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1B1818),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                Text(
-                    text = "상세 내용: ${selection.prompt}",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1B1818),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-            }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-        ) {
-            if (isLoading) {
-                // TODO: 서버 응답까지 로딩 중임을 표시하는 UI
-                Box(modifier = Modifier.fillMaxSize(0.6f)) {
-                    LoadingAnimation()
-                }
-            } else {
-                Text(
-                    text = openAiResponse,
-                    fontSize = 16.sp,
-                    color = Color(0xFF221F10),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
-                        .padding(20.dp)
-                )
-            }
-        }
+
     }
 }
 
@@ -341,7 +253,6 @@ fun ExpandableFilter(
         Row(modifier = Modifier
             .fillMaxWidth()
             .clickable { expanded = true }
-//            .background(Color(0xFFFFFFFF))
             .padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -400,18 +311,6 @@ fun ExpandableFilter(
     }
 }
 
-@Composable
-fun LoadingAnimation() {
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.animation_writing))
-    val progress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever
-    )
-    LottieAnimation(
-        composition = composition,
-        progress = progress
-    )
-}
 
 @Preview(showBackground = true)
 @Composable
