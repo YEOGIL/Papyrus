@@ -176,7 +176,7 @@ fun WriteLetterScreen(navController: NavController) {
                     val documentTypeInput = selectedFormats.joinToString(", ")
                     val promptInput = currentInput
 
-// URL 인코딩 (전달 시 특수문자 문제 방지)
+                    // URL 인코딩 (전달 시 특수문자 문제 방지)
                     val encodedAuthor = URLEncoder.encode(authorInput, "UTF-8")
                     val encodedDocType = URLEncoder.encode(documentTypeInput, "UTF-8")
                     val encodedPrompt = URLEncoder.encode(promptInput, "UTF-8")
