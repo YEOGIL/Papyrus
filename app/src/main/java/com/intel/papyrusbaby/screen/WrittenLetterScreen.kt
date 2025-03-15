@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -117,16 +119,26 @@ fun WrittenLetterScreen(
                 LoadingAnimation()
             }
         } else {
-            Text(
-                text = openAiResponse,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF221F10),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
-                    .padding(20.dp)
-            )
+            Column(modifier = Modifier.fillMaxWidth()
+            .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
+                .padding(20.dp)) {
+                Icon(
+                    painter = painterResource(
+                            R.drawable.icon_archive_outline
+                    ),
+                    tint = Color.Unspecified,
+                    contentDescription = "ArchivedLetters",
+                    modifier = Modifier.align(alignment = Alignment.End).height(20.dp).clickable {
+                    }
+                )
+
+                Text(
+                    text = openAiResponse,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF221F10),
+                )
+            }
         }
         val clipboardManager = LocalClipboardManager.current
         val context = LocalContext.current
