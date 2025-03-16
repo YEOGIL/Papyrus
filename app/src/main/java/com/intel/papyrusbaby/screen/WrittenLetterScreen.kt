@@ -66,9 +66,9 @@ fun WrittenLetterScreen(
     // 서버 요청: 화면이 시작될 때 실행
     LaunchedEffect(Unit) {
         OpenAiServer.sendRequestToServer(
-            author = writer,
-            documentType = documentType,
-            scenario = prompt
+            author = decodedWriter,
+            documentType = decodedDocumentType,
+            scenario = decodedPrompt
         ) { result, error ->
             isLoading = false
             openAiResponse = result ?: "응답 없음"
@@ -119,17 +119,23 @@ fun WrittenLetterScreen(
                 LoadingAnimation()
             }
         } else {
-            Column(modifier = Modifier.fillMaxWidth()
-            .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
-                .padding(20.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
+                    .padding(20.dp)
+            ) {
                 Icon(
                     painter = painterResource(
-                            R.drawable.icon_archive_outline
+                        R.drawable.icon_archive_outline
                     ),
                     tint = Color.Unspecified,
                     contentDescription = "ArchivedLetters",
-                    modifier = Modifier.align(alignment = Alignment.End).height(20.dp).clickable {
-                    }
+                    modifier = Modifier
+                        .align(alignment = Alignment.End)
+                        .height(20.dp)
+                        .clickable {
+                        }
                 )
 
                 Text(
