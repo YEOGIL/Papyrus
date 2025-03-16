@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.intel.papyrusbaby.screen
 
 import android.content.Intent
@@ -54,11 +56,15 @@ fun WrittenLetterScreen(
     var isLoading by remember { mutableStateOf(true) }
     var openAiResponse by remember { mutableStateOf("") }
 
+    // 정상적으로 생성된 답변에 대해서만 처리하는 변수
+    var generationSuccessful by remember { mutableStateOf(false) }
+
     // 현재 날짜 생성 (작성일)
     val currentDate = remember {
         SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault()).format(Date())
     }
-// 전달받은 prompt를 디코딩
+
+    // 전달받은 prompt를 디코딩
     val decodedWriter = URLDecoder.decode(writer, "UTF-8")
     val decodedDocumentType = URLDecoder.decode(documentType, "UTF-8")
     val decodedPrompt = URLDecoder.decode(prompt, "UTF-8")
@@ -69,9 +75,10 @@ fun WrittenLetterScreen(
             author = decodedWriter,
             documentType = decodedDocumentType,
             scenario = decodedPrompt
-        ) { result, error ->
+        ) { serverResponse, error ->
             isLoading = false
-            openAiResponse = result ?: "응답 없음"
+            openAiResponse = serverResponse?.result ?: "응답 없음"
+            generationSuccessful = serverResponse?.isSuccessful ?: false
         }
     }
 
@@ -125,18 +132,21 @@ fun WrittenLetterScreen(
                     .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
                     .padding(20.dp)
             ) {
-                Icon(
-                    painter = painterResource(
-                        R.drawable.icon_archive_outline
-                    ),
-                    tint = Color.Unspecified,
-                    contentDescription = "ArchivedLetters",
-                    modifier = Modifier
-                        .align(alignment = Alignment.End)
-                        .height(20.dp)
-                        .clickable {
-                        }
-                )
+                if (generationSuccessful) {
+                    Icon(
+                        painter = painterResource(
+                            R.drawable.icon_archive_outline
+                        ),
+                        tint = Color.Unspecified,
+                        contentDescription = "ArchivedLetters",
+                        modifier = Modifier
+                            .align(alignment = Alignment.End)
+                            .height(20.dp)
+                            .clickable {
+                                // TODO: 아카이브 기능 추가
+                            }
+                    )
+                }
 
                 Text(
                     text = openAiResponse,
@@ -149,44 +159,47 @@ fun WrittenLetterScreen(
         val clipboardManager = LocalClipboardManager.current
         val context = LocalContext.current
         Row() {
-            Text(
-                text = "보내기",
-                color = Color(0xFF5C5945),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .border(
-                        1.dp,
-                        shape = RoundedCornerShape(5.dp),
-                        color = Color(0xFF94907F)
-                    )
-                    .clickable {
-// 공유 인텐트 생성
-                        val sendIntent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, openAiResponse) // 전송할 텍스트
-                            type = "text/plain"
+            if (generationSuccessful) {
+                Text(
+                    text = "보내기",
+                    color = Color(0xFF5C5945),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .border(
+                            1.dp,
+                            shape = RoundedCornerShape(5.dp),
+                            color = Color(0xFF94907F)
+                        )
+                        .clickable {
+                            // 공유 인텐트 생성
+                            val sendIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, openAiResponse) // 전송할 텍스트
+                                type = "text/plain"
+                            }
+                            // 앱 선택 창 띄우기
+                            val shareIntent = Intent.createChooser(sendIntent, null)
+                            context.startActivity(shareIntent)
                         }
-                        // 앱 선택 창 띄우기
-                        val shareIntent = Intent.createChooser(sendIntent, null)
-                        context.startActivity(shareIntent)
-                    }
-                    .padding(horizontal = 10.dp, vertical = 5.dp))
-            Text(
-                text = "복사하기",
-                color = Color(0xFF5C5945),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .border(
-                        1.dp,
-                        shape = RoundedCornerShape(5.dp),
-                        color = Color(0xFF94907F)
-                    )
-                    .clickable {
-                        clipboardManager.setText(AnnotatedString(openAiResponse))
-                    }
-                    .padding(horizontal = 10.dp, vertical = 5.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp))
+                Text(
+                    text = "복사하기",
+                    color = Color(0xFF5C5945),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .border(
+                            1.dp,
+                            shape = RoundedCornerShape(5.dp),
+                            color = Color(0xFF94907F)
+                        )
+                        .clickable {
+                            clipboardManager.setText(AnnotatedString(openAiResponse))
+                        }
+                        .padding(horizontal = 10.dp, vertical = 5.dp))
+            }
+
             Text(
                 text = "다시 작성하기",
                 color = Color(0xFF5C5945),

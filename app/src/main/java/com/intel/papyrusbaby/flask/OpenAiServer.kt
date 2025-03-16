@@ -11,6 +11,12 @@ import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
 
+// 사용자 정의 데이터 클래스
+data class ServerResponse(
+    val result: String,
+    val isSuccessful: Boolean
+)
+
 object OpenAiServer {
     private val client = OkHttpClient()
 
@@ -18,7 +24,7 @@ object OpenAiServer {
         author: String,
         documentType: String,
         scenario: String,
-        callback: (String?, String?) -> Unit
+        callback: (ServerResponse?, String?) -> Unit
     ) {
         // Flask 서버
         val url = "https://starfish-evolved-molly.ngrok-free.app/generate_letter"
@@ -58,7 +64,8 @@ object OpenAiServer {
                         val jsonResponse = JSONObject(responseBody)
                         // 서버가 {"result": "..."} 형태로 보내준다고 가정
                         val result = jsonResponse.optString("result", "")
-                        callback(result, null)
+                        val isSuccessful = jsonResponse.optBoolean("isSuccessful", false)
+                        callback(ServerResponse(result, isSuccessful), null)
                     } catch (e: Exception) {
                         callback(null, e.localizedMessage)
                     }
