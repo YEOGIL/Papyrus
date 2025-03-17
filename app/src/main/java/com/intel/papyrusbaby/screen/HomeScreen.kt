@@ -25,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,18 +36,24 @@ import androidx.navigation.NavController
 import com.intel.papyrusbaby.PersonCategory
 import com.intel.papyrusbaby.R
 
-
 @Composable
 fun HomeScreen(navController: NavController) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFfffae6))
+            .pointerInput(Unit) {
+                // 포커스 해제
+                focusManager.clearFocus()
+            },
     ) {
         Spacer(modifier = Modifier.size(30.dp))
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 50.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 50.dp)
+        ) {
             Icon(
                 painter = painterResource(id = R.drawable.icon_quotationmark),
                 contentDescription = "papyrusLogo",

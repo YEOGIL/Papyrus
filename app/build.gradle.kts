@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,7 +8,12 @@ plugins {
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
 }
-
+//val localProperties = Properties().apply {
+//    val localPropertiesFile = rootProject.file("local.properties")
+//    if (localPropertiesFile.exists()) {
+//        localPropertiesFile.inputStream().use { load(it) }
+//    }
+//}
 android {
     namespace = "com.intel.papyrusbaby"
     compileSdk = 35
@@ -19,6 +26,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        //Firebase App Key
+//        val defaultWebClientId = localProperties.getProperty("DEFAULT_WEB_CLIENT_ID", "")
+//        buildConfigField("String", "DEFAULT_WEB_CLIENT_ID", defaultWebClientId)
     }
 
     buildTypes {
@@ -39,6 +49,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -84,4 +95,11 @@ dependencies {
     // For example, add the dependencies for Firebase Authentication and Cloud Firestore
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.firebaseui:firebase-ui-auth:8.0.2")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // Also add the dependencies for the Credential Manager libraries and specify their versions
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 }

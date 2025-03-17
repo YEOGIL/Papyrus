@@ -7,32 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,17 +25,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.intel.papyrusbaby.firebase.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavController) {
+fun AppBar(
+    currentUser: User?,
+    onWithdraw: () -> Unit,
+    content: @Composable (PaddingValues) -> Unit,
+    navController: NavController
+) {
     // DrawerState to control the drawer's open/close state
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
@@ -65,7 +53,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
         gesturesEnabled = false,
         drawerContent = {
             //Drawer 내에서 닫힘 버튼을 구현하기 위해 parameter로 coroutineScope와 drawerState 전달
-            DrawerContent(navController, coroutineScope, drawerState)
+            DrawerContent(navController, coroutineScope, drawerState, currentUser, onWithdraw)
         },
         content = {
             Scaffold(
@@ -95,7 +83,9 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                             painter = painterResource(R.drawable.papyruslogo),
                             contentDescription = "Menu",
                             tint = Color.Unspecified,
-                            modifier = Modifier.align(Alignment.Center).padding(top = 20.dp)
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(top = 20.dp)
                         )
                     }
                 },
@@ -171,7 +161,9 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
 fun DrawerContent(
     navController: NavController,
     coroutineScope: CoroutineScope,
-    drawerState: DrawerState
+    drawerState: DrawerState,
+    currentUser: User?,
+    onWithdraw: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -183,14 +175,14 @@ fun DrawerContent(
             painter = painterResource(R.drawable.icon_drawerclose),
             tint = Color.Unspecified,
             contentDescription = "CloseDrawer",
-            modifier = Modifier.
-            padding(top = 15.dp, start = 15.dp)
+            modifier = Modifier
+                .padding(top = 15.dp, start = 15.dp)
                 .clickable {
-                // Open the Drawer
-                coroutineScope.launch {
-                    drawerState.close()
+                    // Open the Drawer
+                    coroutineScope.launch {
+                        drawerState.close()
+                    }
                 }
-            }
         )
         Icon(
             painter = painterResource(R.drawable.papyruslogo),
@@ -198,6 +190,16 @@ fun DrawerContent(
             tint = Color.Unspecified,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
+
+        // 유저 정보가 있을 경우 인사말 표시
+        if (currentUser != null) {
+            Text(
+                text = "반갑습니다, ${currentUser.name} 님",
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
         Text(
             text = "Menu Item 1",
             modifier = Modifier
@@ -215,5 +217,14 @@ fun DrawerContent(
                 }
         )
         // Add more items as needed
+        // "Menu Item 2" 하단에 회원 탈퇴 버튼 배치
+        if (currentUser != null) {
+            Text(
+                text = "회원 탈퇴",
+                modifier = Modifier
+                    .padding(16.dp)
+                    .clickable { onWithdraw() }
+            )
+        }
     }
 }
