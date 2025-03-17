@@ -74,8 +74,6 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFFfffae6))
-                            .padding(top = 10.dp)
-                            .padding(horizontal = 10.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.icon_draweropen),
@@ -83,6 +81,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                             tint = Color.Unspecified,
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
+                                .padding(top = 15.dp, start = 15.dp)
                                 .clickable {
                                     // Open the Drawer
                                     coroutineScope.launch {
@@ -96,7 +95,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                             painter = painterResource(R.drawable.papyruslogo),
                             contentDescription = "Menu",
                             tint = Color.Unspecified,
-                            modifier = Modifier.align(Alignment.Center)
+                            modifier = Modifier.align(Alignment.Center).padding(top = 20.dp)
                         )
                     }
                 },
@@ -106,6 +105,7 @@ fun AppBar(content: @Composable (PaddingValues) -> Unit, navController: NavContr
                     val currentRoute = navBackStackEntry?.destination?.route
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFFfffae6))
@@ -183,7 +183,9 @@ fun DrawerContent(
             painter = painterResource(R.drawable.icon_drawerclose),
             tint = Color.Unspecified,
             contentDescription = "CloseDrawer",
-            modifier = Modifier.clickable {
+            modifier = Modifier.
+            padding(top = 15.dp, start = 15.dp)
+                .clickable {
                 // Open the Drawer
                 coroutineScope.launch {
                     drawerState.close()

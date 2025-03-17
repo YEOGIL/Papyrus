@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,7 +15,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +34,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -158,33 +164,50 @@ fun WrittenLetterScreen(
         }
         val clipboardManager = LocalClipboardManager.current
         val context = LocalContext.current
-        Row() {
             if (generationSuccessful) {
-                Text(
-                    text = "보내기",
-                    color = Color(0xFF5C5945),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .border(
-                            1.dp,
-                            shape = RoundedCornerShape(5.dp),
-                            color = Color(0xFF94907F)
-                        )
-                        .clickable {
-                            // 공유 인텐트 생성
-                            val sendIntent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, openAiResponse) // 전송할 텍스트
-                                type = "text/plain"
+                Row(){
+                    Text(
+                        text = "보내기",
+                        color = Color(0xFF5C5945),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .border(
+                                1.dp,
+                                shape = RoundedCornerShape(5.dp),
+                                color = Color(0xFF94907F)
+                            )
+                            .clickable {
+                                // 공유 인텐트 생성
+                                val sendIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, openAiResponse) // 전송할 텍스트
+                                    type = "text/plain"
+                                }
+                                // 앱 선택 창 띄우기
+                                val shareIntent = Intent.createChooser(sendIntent, null)
+                                context.startActivity(shareIntent)
                             }
-                            // 앱 선택 창 띄우기
-                            val shareIntent = Intent.createChooser(sendIntent, null)
-                            context.startActivity(shareIntent)
-                        }
-                        .padding(horizontal = 10.dp, vertical = 5.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp))
+                    Text(
+                        text = "복사하기",
+                        color = Color(0xFF5C5945),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .border(
+                                1.dp,
+                                shape = RoundedCornerShape(5.dp),
+                                color = Color(0xFF94907F)
+                            )
+                            .clickable {
+                                clipboardManager.setText(AnnotatedString(openAiResponse))
+                            }
+                            .padding(horizontal = 10.dp, vertical = 5.dp))
+
+
                 Text(
-                    text = "복사하기",
+                    text = "다시 작성하기",
                     color = Color(0xFF5C5945),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -195,28 +218,14 @@ fun WrittenLetterScreen(
                             color = Color(0xFF94907F)
                         )
                         .clickable {
-                            clipboardManager.setText(AnnotatedString(openAiResponse))
+                            navController.popBackStack()
                         }
                         .padding(horizontal = 10.dp, vertical = 5.dp))
             }
 
-            Text(
-                text = "다시 작성하기",
-                color = Color(0xFF5C5945),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .border(
-                        1.dp,
-                        shape = RoundedCornerShape(5.dp),
-                        color = Color(0xFF94907F)
-                    )
-                    .clickable {
-                        navController.popBackStack()
-                    }
-                    .padding(horizontal = 10.dp, vertical = 5.dp))
-        }
-
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            FontSelectionScreen(openAiResponse)
+        }}
     }
 }
 
@@ -231,4 +240,54 @@ fun LoadingAnimation() {
         composition = composition,
         progress = progress
     )
+}
+
+@Composable
+fun FontSelectionScreen(openAiResponse: String) {
+    // 기본 폰트와 커스텀 폰트 정의
+    val defaultFont = FontFamily.Default
+    val boldAndClearFont = FontFamily(Font(R.font.boldandclear))
+    val cuteFont = FontFamily(Font(R.font.cute))
+    val handwritingFont = FontFamily(Font(R.font.handwriting))
+    val handwritingThinFont = FontFamily(Font(R.font.handwritingthin))
+
+    // 선택된 폰트를 상태로 관리 (초기값은 기본 폰트)
+    var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
+
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
+
+        // 폰트 선택 버튼 Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Button(onClick = { selectedFontFamily = defaultFont }) {
+                Text("Default")
+            }
+            Button(onClick = { selectedFontFamily = boldAndClearFont }) {
+                Text("Bold & Clear")
+            }
+            Button(onClick = { selectedFontFamily = cuteFont }) {
+                Text("Cute")
+            }
+            Button(onClick = { selectedFontFamily = handwritingFont }) {
+                Text("Handwriting")
+            }
+            Button(onClick = { selectedFontFamily = handwritingThinFont }) {
+                Text("Handwriting Thin")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 선택한 폰트로 openAiResponse 출력
+        Text(
+            text = openAiResponse,
+            fontSize = 16.sp,
+            fontFamily = selectedFontFamily,
+            color = Color(0xFF221F10)
+        )
+    }
 }
