@@ -28,14 +28,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.intel.papyrusbaby.firebase.User
-import kotlinx.coroutines.CoroutineScope
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppBar(
-    currentUser: User?,
+    currentUser: FirebaseUser?,
     onWithdraw: () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
     navController: NavController
@@ -49,7 +48,7 @@ fun AppBar(
     // The ModalNavigationDrawer composable
     ModalNavigationDrawer(
         drawerState = drawerState,
-        //닫힘 버튼을 통해서만 drawer 닫을 수 있게 gestured disabled
+        // todo: 닫힘 버튼을 통해서만 drawer 닫을 수 있게 gestured disabled
         gesturesEnabled = false,
         drawerContent = {
             //Drawer 내에서 닫힘 버튼을 구현하기 위해 parameter로 coroutineScope와 drawerState 전달
@@ -160,9 +159,9 @@ fun AppBar(
 @Composable
 fun DrawerContent(
     navController: NavController,
-    coroutineScope: CoroutineScope,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
     drawerState: DrawerState,
-    currentUser: User?,
+    currentUser: FirebaseUser?,
     onWithdraw: () -> Unit
 ) {
     Column(
@@ -194,7 +193,7 @@ fun DrawerContent(
         // 유저 정보가 있을 경우 인사말 표시
         if (currentUser != null) {
             Text(
-                text = "반갑습니다, ${currentUser.name} 님",
+                text = "반갑습니다, ${currentUser.displayName ?: "User"} 님",
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
@@ -217,10 +216,10 @@ fun DrawerContent(
                 }
         )
         // Add more items as needed
-        // "Menu Item 2" 하단에 회원 탈퇴 버튼 배치
+        // 구글 로그 아웃
         if (currentUser != null) {
             Text(
-                text = "회원 탈퇴",
+                text = "로그 아웃",
                 modifier = Modifier
                     .padding(16.dp)
                     .clickable { onWithdraw() }
