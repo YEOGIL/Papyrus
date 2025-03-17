@@ -8,12 +8,7 @@ plugins {
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
 }
-//val localProperties = Properties().apply {
-//    val localPropertiesFile = rootProject.file("local.properties")
-//    if (localPropertiesFile.exists()) {
-//        localPropertiesFile.inputStream().use { load(it) }
-//    }
-//}
+
 android {
     namespace = "com.intel.papyrusbaby"
     compileSdk = 35
@@ -26,9 +21,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        //Firebase App Key
-//        val defaultWebClientId = localProperties.getProperty("DEFAULT_WEB_CLIENT_ID", "")
-//        buildConfigField("String", "DEFAULT_WEB_CLIENT_ID", defaultWebClientId)
     }
 
     buildTypes {
@@ -102,4 +94,8 @@ dependencies {
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // Coil (Jetpack Compose 이미지 로딩 라이브러리)
+    implementation("io.coil-kt.coil3:coil-compose:3.1.0")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.1.0")
 }
