@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -50,8 +52,7 @@ fun AppBar(
     // The ModalNavigationDrawer composable
     ModalNavigationDrawer(
         drawerState = drawerState,
-        // todo: 닫힘 버튼을 통해서만 drawer 닫을 수 있게 gestured disabled
-        gesturesEnabled = false,
+        gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             //Drawer 내에서 닫힘 버튼을 구현하기 위해 parameter로 coroutineScope와 drawerState 전달
             DrawerContent(navController, coroutineScope, drawerState, currentUser, onWithdraw)
@@ -173,26 +174,28 @@ fun DrawerContent(
             .fillMaxWidth(0.8f)
             .fillMaxHeight()
             .background(Color(0xFFF7ECCD))
+            .statusBarsPadding()
     ) {
-        Icon(
-            painter = painterResource(R.drawable.icon_drawerclose),
-            tint = Color.Unspecified,
-            contentDescription = "CloseDrawer",
-            modifier = Modifier
-                .padding(top = 15.dp, start = 15.dp)
-                .clickable {
-                    // Open the Drawer
-                    coroutineScope.launch {
-                        drawerState.close()
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Icon(
+                painter = painterResource(R.drawable.icon_drawerclose),
+                tint = Color.Unspecified,
+                contentDescription = "CloseDrawer",
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .clickable {
+                        // Close the Drawer
+                        coroutineScope.launch { drawerState.close() }
                     }
-                }
-        )
-        Icon(
-            painter = painterResource(R.drawable.papyruslogo),
-            contentDescription = "Menu",
-            tint = Color.Unspecified,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+            )
+            Icon(
+                painter = painterResource(R.drawable.papyruslogo),
+                contentDescription = "Menu",
+                tint = Color.Unspecified,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // 유저 정보가 있을 경우 인사말 표시
         if (currentUser != null) {
@@ -203,22 +206,46 @@ fun DrawerContent(
             )
         }
 
-        Text(
-            text = "Menu Item 1",
+        Box(
             modifier = Modifier
-                .padding(16.dp)
+                .fillMaxWidth()
                 .clickable {
+                    coroutineScope.launch { drawerState.close() }
                     navController.navigate("home")
                 }
-        )
-        Text(
-            text = "Menu Item 2",
+        ) {
+            Text(
+                text = "홈으로",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+        Box(
             modifier = Modifier
-                .padding(16.dp)
+                .fillMaxWidth()
                 .clickable {
+                    coroutineScope.launch { drawerState.close() }
                     navController.navigate("write")
                 }
-        )
+        ) {
+            Text(
+                text = "작성하기",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    coroutineScope.launch { drawerState.close() }
+                    navController.navigate("archive")
+                }
+        ) {
+            Text(
+                text = "보관함",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
         // Add more items as needed
         // 구글 로그 아웃
         if (currentUser != null) {
