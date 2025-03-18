@@ -1,6 +1,5 @@
 package com.intel.papyrusbaby.screen
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,6 +44,7 @@ import coil3.compose.AsyncImage
 import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.firebase.Author
 import com.intel.papyrusbaby.firebase.AuthorRepository
+import com.intel.papyrusbaby.util.AuthorInfoDialog
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -142,13 +142,21 @@ fun HomeScreen(navController: NavController) {
 
 @Composable
 fun AuthorBox(author: Author, navController: NavController) {
+    var showInfoDialog by remember { mutableStateOf(false) }
+
+    if (showInfoDialog) {
+        AuthorInfoDialog(
+            author = author,
+            navController = navController,
+            onDismiss = { showInfoDialog = false }
+        )
+    }
+
     Box(
         modifier = Modifier
             .clickable {
-                // 예: 클릭 시 "write" 화면으로 이동
-                navController.navigate("write") {
-                    launchSingleTop = true
-                }
+                // 작가 정보 다이얼로그 표시
+                showInfoDialog = true
             },
         contentAlignment = Alignment.Center
     ) {
@@ -169,7 +177,7 @@ fun AuthorBox(author: Author, navController: NavController) {
             AsyncImage(
                 model = author.imageUrl,
                 contentDescription = "Author Image",
-                modifier = Modifier
+                modifier = Modifier.height(100.dp)
             )
 
 
