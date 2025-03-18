@@ -61,6 +61,7 @@ fun WrittenLetterScreen(
     navController: NavController
 ) {
     var isLoading by remember { mutableStateOf(true) }
+    var isFinished by remember { mutableStateOf(false) }
     var openAiResponse by remember { mutableStateOf("") }
 
     // 정상적으로 생성된 답변에 대해서만 처리하는 변수
@@ -84,6 +85,7 @@ fun WrittenLetterScreen(
             scenario = decodedPrompt
         ) { serverResponse, error ->
             isLoading = false
+            isFinished = true
             openAiResponse = serverResponse?.result ?: "응답 없음"
             generationSuccessful = serverResponse?.isSuccessful ?: false
         }
@@ -103,13 +105,13 @@ fun WrittenLetterScreen(
             color = Color(0xFF1B1818)
         )
         Text(
-            text = "작가: $decodedWriter",
+            text = "작가: ${decodedWriter.ifEmpty { "무명 작가" }}",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF1B1818)
         )
         Text(
-            text = "글 형식: $decodedDocumentType",
+            text = "글 형식: ${decodedDocumentType.ifEmpty { "단문" }}",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF1B1818)
@@ -168,8 +170,13 @@ fun WrittenLetterScreen(
         }
         val clipboardManager = LocalClipboardManager.current
         val context = LocalContext.current
-            if (generationSuccessful) {
-                Row(){
+        if (isFinished) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                if (generationSuccessful) {
                     Text(
                         text = "보내기",
                         color = Color(0xFF5C5945),
@@ -207,8 +214,9 @@ fun WrittenLetterScreen(
                             .clickable {
                                 clipboardManager.setText(AnnotatedString(openAiResponse))
                             }
-                            .padding(horizontal = 10.dp, vertical = 5.dp))
-
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
 
                 Text(
                     text = "다시 작성하기",
@@ -227,9 +235,12 @@ fun WrittenLetterScreen(
                         .padding(horizontal = 10.dp, vertical = 5.dp))
             }
 
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            FontSelectionScreen(openAiResponse)
-        }}
+            if (generationSuccessful) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    FontSelectionScreen(openAiResponse)
+                }
+            }
+        }
     }
 }
 
@@ -258,29 +269,37 @@ fun FontSelectionScreen(openAiResponse: String) {
     // 선택된 폰트를 상태로 관리 (초기값은 기본 폰트)
     var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
 
         // 폰트 선택 버튼 Row
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            // Default
             Button(onClick = { selectedFontFamily = defaultFont }) {
-                Text("Default")
+                Text("Def")
             }
+            //Bold & Clear
             Button(onClick = { selectedFontFamily = boldAndClearFont }) {
-                Text("Bold & Clear")
+                Text("Bold")
             }
+            // Cute
             Button(onClick = { selectedFontFamily = cuteFont }) {
                 Text("Cute")
             }
+            // Handwriting
             Button(onClick = { selectedFontFamily = handwritingFont }) {
-                Text("Handwriting")
+                Text("Hand")
             }
+            // Handwriting Thin
             Button(onClick = { selectedFontFamily = handwritingThinFont }) {
-                Text("Handwriting Thin")
+                Text("HandT")
             }
         }
 
