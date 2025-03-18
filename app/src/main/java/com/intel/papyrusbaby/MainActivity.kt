@@ -49,7 +49,8 @@ class MainActivity : ComponentActivity() {
                     content = { paddingValues ->
                         NavHost(
                             navController = navController,
-                            startDestination = if (!isLoggedIn) "auth" else "home",
+//                            startDestination = if (!isLoggedIn) "auth" else "home",
+                            startDestination = "home",
                             modifier = Modifier.padding(paddingValues)
                         ) {
                             composable("home") { HomeScreen(navController) }
