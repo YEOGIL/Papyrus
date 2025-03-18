@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +63,7 @@ fun AppBar(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFFfffae6))
+                            .statusBarsPadding()
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.icon_draweropen),
@@ -98,7 +101,8 @@ fun AppBar(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color(0xFFfffae6))
-                            .padding(horizontal = 25.dp, vertical = 10.dp),
+                            .padding(horizontal = 25.dp, vertical = 10.dp)
+                            .navigationBarsPadding(),
                     ) {
                         Icon(
                             painter = painterResource(

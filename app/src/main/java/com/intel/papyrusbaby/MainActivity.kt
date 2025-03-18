@@ -26,6 +26,7 @@ import com.intel.papyrusbaby.screen.WrittenLetterScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             PapyrusBabyTheme {
                 val navController = rememberNavController()
