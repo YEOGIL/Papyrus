@@ -26,7 +26,6 @@ import com.intel.papyrusbaby.screen.WrittenLetterScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             PapyrusBabyTheme {
                 val navController = rememberNavController()
@@ -64,12 +63,15 @@ class MainActivity : ComponentActivity() {
                                 route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}",
                                 arguments = listOf(
                                     androidx.navigation.navArgument("writer") { defaultValue = "" },
-                                    androidx.navigation.navArgument("documentType") { defaultValue = "" },
+                                    androidx.navigation.navArgument("documentType") {
+                                        defaultValue = ""
+                                    },
                                     androidx.navigation.navArgument("prompt") { defaultValue = "" }
                                 )
                             ) { backStackEntry ->
                                 val writer = backStackEntry.arguments?.getString("writer") ?: ""
-                                val documentType = backStackEntry.arguments?.getString("documentType") ?: ""
+                                val documentType =
+                                    backStackEntry.arguments?.getString("documentType") ?: ""
                                 val prompt = backStackEntry.arguments?.getString("prompt") ?: ""
                                 WrittenLetterScreen(
                                     writer = writer,
