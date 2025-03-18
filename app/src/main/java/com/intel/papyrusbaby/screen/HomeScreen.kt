@@ -1,5 +1,7 @@
 package com.intel.papyrusbaby.screen
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +48,23 @@ import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.firebase.Author
 import com.intel.papyrusbaby.firebase.AuthorRepository
 import com.intel.papyrusbaby.util.AuthorInfoDialog
+import com.intel.papyrusbaby.util.ExitDialog
 
 @Composable
 fun HomeScreen(navController: NavController) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    BackHandler { showExitDialog = true }
+
+    if (showExitDialog) {
+        ExitDialog(
+            onDismiss = { showExitDialog = false },
+            activity = activity
+        )
+    }
+
     val focusManager = LocalFocusManager.current
 
     // 코루틴 스코프
