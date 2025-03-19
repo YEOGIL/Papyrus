@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 // 회원 탈퇴 콜백
-                val onWithdraw: () -> Unit = {
+                val onDeleteAccount: () -> Unit = {
                     // user.delete() → signOut 순서
 //                    currentFirebaseUser.value?.delete()?.addOnCompleteListener {
 //                        Firebase.auth.signOut()
@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
                 AppBar(
                     // currentUser를 state에서 읽어옴
                     currentUser = currentFirebaseUser.value,
-                    onWithdraw = onWithdraw,
+                    onDeleteAccount = onDeleteAccount,
                     content = { paddingValues ->
                         NavHost(
                             navController = navController,
