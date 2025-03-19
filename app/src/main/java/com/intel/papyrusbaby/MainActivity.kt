@@ -17,6 +17,7 @@ import com.intel.papyrusbaby.firebase.AuthScreenEmailPassword
 import com.intel.papyrusbaby.screen.ArchivedLetterScreen
 import com.intel.papyrusbaby.screen.HomeScreen
 import com.intel.papyrusbaby.screen.WriteLetterScreen
+import com.intel.papyrusbaby.screen.WrittenLetterScreen
 import com.intel.papyrusbaby.ui.theme.PapyrusBabyTheme
 
 class MainActivity : ComponentActivity() {
@@ -74,7 +75,27 @@ class MainActivity : ComponentActivity() {
                             composable("home") { HomeScreen(navController) }
                             composable("write") { WriteLetterScreen(navController) }
                             composable("archive") { ArchivedLetterScreen(navController) }
-                            // etc...
+                            composable(
+                                route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}",
+                                arguments = listOf(
+                                    androidx.navigation.navArgument("writer") { defaultValue = "" },
+                                    androidx.navigation.navArgument("documentType") {
+                                        defaultValue = ""
+                                    },
+                                    androidx.navigation.navArgument("prompt") { defaultValue = "" }
+                                )
+                            ) { backStackEntry ->
+                                val writer = backStackEntry.arguments?.getString("writer") ?: ""
+                                val documentType =
+                                    backStackEntry.arguments?.getString("documentType") ?: ""
+                                val prompt = backStackEntry.arguments?.getString("prompt") ?: ""
+                                WrittenLetterScreen(
+                                    writer = writer,
+                                    documentType = documentType,
+                                    prompt = prompt,
+                                    navController = navController
+                                )
+                            }
                         }
                     },
                     navController = navController
