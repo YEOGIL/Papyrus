@@ -45,6 +45,23 @@ import com.intel.papyrusbaby.R
 import java.io.File
 import java.io.FileOutputStream
 
+// SVG 파일을 Bitmap으로 변환하는 헬퍼 함수
+fun getBitmapFromSvgResource(context: Context, resId: Int, width: Int, height: Int): Bitmap? {
+    return try {
+        val inputStream = context.resources.openRawResource(resId)
+        val svg = SVG.getFromInputStream(inputStream)
+        svg.setDocumentWidth(width.toFloat())
+        svg.setDocumentHeight(height.toFloat())
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        svg.renderToCanvas(canvas)
+        bitmap
+    } catch (e: Exception) {
+        Log.e("SVGConversion", "Error converting SVG to Bitmap", e)
+        null
+    }
+}
+
 @Composable
 fun ImageGenerationScreen(
     navController: NavController,
@@ -52,51 +69,75 @@ fun ImageGenerationScreen(
 ) {
     val context = LocalContext.current
 
-    // 배경 및 폰트 선택 상태
-    var backgroundRes by remember { mutableIntStateOf(R.drawable.paper01) }
+    // 1. 폰트 패밀리 정의
+    val defaultFont = FontFamily.Default
+    val boldFont = FontFamily(Font(R.font.boldandclear))
+    val cuteFont = FontFamily(Font(R.font.cute))
+    val handFont = FontFamily(Font(R.font.handwriting))
+    val handThinFont = FontFamily(Font(R.font.handwritingthin))
+
+    // 2. Typeface는 한 번 로딩해서 캐싱
     val defaultTypeface = Typeface.DEFAULT
     val boldTypeface = ResourcesCompat.getFont(context, R.font.boldandclear) ?: Typeface.DEFAULT
     val cuteTypeface = ResourcesCompat.getFont(context, R.font.cute) ?: Typeface.DEFAULT
     val handwritingTypeface = ResourcesCompat.getFont(context, R.font.handwriting) ?: Typeface.DEFAULT
     val handwritingThinTypeface = ResourcesCompat.getFont(context, R.font.handwritingthin) ?: Typeface.DEFAULT
 
+    // 3. FontFamily와 Typeface 매핑 (drawLetterOnCanvas에서 사용)
+    val fontMapping = remember {
+        mapOf(
+            defaultFont to defaultTypeface,
+            boldFont to boldTypeface,
+            cuteFont to cuteTypeface,
+            handFont to handwritingTypeface,
+            handThinFont to handwritingThinTypeface
+        )
+    }
+
+    // 배경 및 폰트 선택 상태
+    var backgroundRes by remember { mutableIntStateOf(R.drawable.paper01) }
     var selectedFont by remember { mutableStateOf<FontFamily>(defaultFont) }
 
     // 고정 이미지 해상도 (원본 생성)
     val fixedWidth = 768
     val fixedHeight = 1024
 
-    // 가장 최근에 생성된 원본 Bitmap 상태
+    // 생성된 Bitmap 상태
     var generatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    // 선택이 변경될 때마다 전체 해상도의 편지 이미지를 새로 생성 후 미리보기로 업데이트
+    // 상태 변경 시마다 새 이미지를 생성 (try-catch로 예외 로깅 추가)
     LaunchedEffect(backgroundRes, selectedFont, letterText) {
-        Log.d("ImageGenerationScreen", "LaunchedEffect triggered - backgroundRes: $backgroundRes, selectedFont: $selectedFont, letterText: $letterText")
-        generatedBitmap = generateFixedSizeBitmap(fixedWidth, fixedHeight) { canvas ->
-            drawLetterOnCanvas(
-                context = context,
-                canvas = canvas,
-                backgroundRes = backgroundRes,
-                letterText = letterText,
-                fontFamily = selectedFont,
-                width = fixedWidth,
-                height = fixedHeight
-            )
+        try {
+            Log.d("ImageGenerationScreen", "LaunchedEffect triggered - backgroundRes: $backgroundRes, selectedFont: $selectedFont, letterText: $letterText")
+            generatedBitmap = generateFixedSizeBitmap(fixedWidth, fixedHeight) { canvas ->
+                drawLetterOnCanvas(
+                    context = context,
+                    canvas = canvas,
+                    backgroundRes = backgroundRes,
+                    letterText = letterText,
+                    fontFamily = selectedFont,
+                    width = fixedWidth,
+                    height = fixedHeight,
+                    fontMapping = fontMapping
+                )
+            }
+            Log.d("ImageGenerationScreen", "New image generated")
+        } catch (e: Exception) {
+            Log.e("ImageGenerationScreen", "Error generating image", e)
         }
-        Log.d("ImageGenerationScreen", "New image generated")
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // 화면이 넘어가면 스크롤
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         TopBar(navController = navController, title = "이미지 생성")
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 1) 편지지 선택
+        // 편지지 선택
         BackgroundSelector(
             selectedBackgroundRes = backgroundRes,
             onBackgroundSelected = { res ->
@@ -107,7 +148,7 @@ fun ImageGenerationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 2) 폰트 선택
+        // 폰트 선택
         FontSelector(
             defaultFont = defaultFont,
             boldAndClearFont = boldFont,
@@ -122,19 +163,20 @@ fun ImageGenerationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3) 생성된 전체 원본 편지 이미지 미리보기
-        if (generatedBitmap != null) {
-            GeneratedLetterPreview(bitmap = generatedBitmap!!)
+        // 생성된 이미지 미리보기
+        generatedBitmap?.let { bitmap ->
+            GeneratedLetterPreview(bitmap = bitmap)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4) 공유/저장 버튼 (원본 Bitmap 사용)
-        if (generatedBitmap != null) {
-            ActionButtons(context = context, bitmap = generatedBitmap!!)
+        // 공유/저장 버튼
+        generatedBitmap?.let { bitmap ->
+            ActionButtons(context = context, bitmap = bitmap)
         }
     }
 }
+
 @Composable
 fun TopBar(navController: NavController, title: String) {
     Row(
@@ -221,10 +263,6 @@ fun FontSelector(
     }
 }
 
-/**
- * 생성된 Bitmap을 비율에 맞춰 화면에 표시하는 미리보기
- * - 원본 전체 이미지를 화면 너비에 맞춰 축소하여 표시
- */
 @Composable
 fun GeneratedLetterPreview(bitmap: Bitmap) {
     Image(
@@ -232,7 +270,7 @@ fun GeneratedLetterPreview(bitmap: Bitmap) {
         contentDescription = "Generated Letter",
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(3f / 4f) // 가로 3 : 세로 4 비율로 고정
+            .aspectRatio(3f / 4f)
             .clip(RoundedCornerShape(16.dp)),
         contentScale = ContentScale.Fit
     )
@@ -247,7 +285,6 @@ fun ActionButtons(context: Context, bitmap: Bitmap) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 공유하기 버튼 (원본 Bitmap 사용)
         Button(onClick = {
             try {
                 val imageUri = saveBitmapToCache(context, bitmap)
@@ -268,8 +305,6 @@ fun ActionButtons(context: Context, bitmap: Bitmap) {
         }) {
             Text("공유하기")
         }
-
-        // 저장하기 버튼 (원본 Bitmap 사용)
         Button(onClick = {
             try {
                 val savedUri = saveBitmapToGallery(context, bitmap)
@@ -287,7 +322,6 @@ fun ActionButtons(context: Context, bitmap: Bitmap) {
     }
 }
 
-/** 고정 크기의 Bitmap을 생성하는 함수 (원본 해상도) */
 fun generateFixedSizeBitmap(
     width: Int = 768,
     height: Int = 1024,
@@ -299,7 +333,6 @@ fun generateFixedSizeBitmap(
     return bitmap
 }
 
-/** 배경 이미지 + 텍스트를 그려 편지 형태로 만드는 함수 */
 fun drawLetterOnCanvas(
     context: Context,
     canvas: Canvas,
@@ -307,33 +340,27 @@ fun drawLetterOnCanvas(
     letterText: String,
     fontFamily: FontFamily,
     width: Int,
-    height: Int
+    height: Int,
+    fontMapping: Map<FontFamily, Typeface>
 ) {
     Log.d("drawLetterOnCanvas", "Drawing with backgroundRes: $backgroundRes, letterText: $letterText")
 
-    // 배경 이미지 처리: SVG 파일을 Bitmap으로 변환 시도
+    // SVG 파일을 Bitmap으로 변환 시도하고, 실패 시 기본 리소스로 로드
     val bgBitmap = getBitmapFromSvgResource(context, backgroundRes, width, height)
         ?: BitmapFactory.decodeResource(context.resources, backgroundRes)
-
     if (bgBitmap != null) {
         canvas.drawBitmap(bgBitmap, null, Rect(0, 0, width, height), null)
     } else {
         canvas.drawColor(Color.White.toArgb())
     }
 
-    // 텍스트 그리기 (StaticLayout 사용)
     val textPaint = TextPaint().apply {
         color = Color.Black.toArgb()
         val density = context.resources.displayMetrics.density
         textSize = 20 * density
         textAlign = Paint.Align.LEFT
         isAntiAlias = true
-        // fontFamily에 따라 적절한 Typeface 적용 (앞서 설정한 Typeface 변수 사용)
-        typeface = when (fontFamily) {
-            FontFamily.Default -> Typeface.DEFAULT
-            // 예시로 bold 폰트 처리 (필요에 따라 다른 폰트도 처리)
-            else -> Typeface.DEFAULT
-        }
+        typeface = fontMapping[fontFamily] ?: Typeface.DEFAULT
     }
 
     val padding = (50 * context.resources.displayMetrics.density).toInt()
@@ -346,27 +373,17 @@ fun drawLetterOnCanvas(
             .build()
     } else {
         @Suppress("DEPRECATION")
-        StaticLayout(
-            letterText,
-            textPaint,
-            textWidth,
-            Layout.Alignment.ALIGN_NORMAL,
-            1.2f,
-            0f,
-            false
-        )
+        StaticLayout(letterText, textPaint, textWidth, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0f, false)
     }
 
     val textHeight = staticLayout.height
     canvas.save()
-    // 텍스트를 수직 중앙에 배치
     val centerY = (height - textHeight) / 2f
     canvas.translate(padding.toFloat(), centerY)
     staticLayout.draw(canvas)
     canvas.restore()
 }
 
-/** 갤러리에 Bitmap을 저장 (JPEG) */
 fun saveBitmapToGallery(
     context: Context,
     bitmap: Bitmap,
@@ -389,7 +406,6 @@ fun saveBitmapToGallery(
     return uri
 }
 
-/** 임시 캐시 디렉토리에 Bitmap을 저장하고 FileProvider로 Uri 생성 (PNG) */
 fun saveBitmapToCache(
     context: Context,
     bitmap: Bitmap,
@@ -402,27 +418,6 @@ fun saveBitmapToCache(
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
     }
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-}
-
-/** SVG 리소스를 Bitmap으로 변환하는 함수 */
-fun getBitmapFromSvgResource(context: Context, resId: Int, width: Int, height: Int): Bitmap? {
-    return try {
-        // SVG 파일을 InputStream으로 열기
-        val inputStream = context.resources.openRawResource(resId)
-        val svg = SVG.getFromInputStream(inputStream)
-        // 문서 크기를 지정해줍니다.
-        svg.setDocumentWidth(width.toFloat())
-        svg.setDocumentHeight(height.toFloat())
-        // Bitmap 생성 및 캔버스 연결
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        // SVG를 캔버스에 렌더링
-        svg.renderToCanvas(canvas)
-        bitmap
-    } catch (e: Exception) {
-        Log.e("SVGConversion", "Error converting SVG to Bitmap", e)
-        null
-    }
 }
 
 @Preview(showBackground = true)
