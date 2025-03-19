@@ -317,7 +317,7 @@ fun ShowImageGenerationDialog(
     onSave: (Bitmap) -> Unit
 ) {
     // 배경 선택: drawable에 paper1, paper2가 있다고 가정 (R.drawable.paper1, R.drawable.paper2)
-    var selectedBackgroundRes by remember { mutableIntStateOf(R.drawable.paper1) }
+    var selectedBackgroundRes by remember { mutableIntStateOf(R.drawable.paper01) }
     // 폰트 선택
     var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
     // 미리보기 영역의 크기를 측정하기 위한 상태
@@ -356,25 +356,25 @@ fun ShowImageGenerationDialog(
                 ) {
                     // paper1 버튼
                     Image(
-                        painter = painterResource(id = R.drawable.paper1),
+                        painter = painterResource(id = R.drawable.paper01),
                         contentDescription = "Paper 1",
                         modifier = Modifier
-                            .clickable { selectedBackgroundRes = R.drawable.paper1 }
+                            .clickable { selectedBackgroundRes = R.drawable.paper01 }
                             .border(
                                 width = 2.dp,
-                                color = if (selectedBackgroundRes == R.drawable.paper1) Color.Blue else Color.Transparent,
+                                color = if (selectedBackgroundRes == R.drawable.paper01) Color.Blue else Color.Transparent,
                                 shape = RoundedCornerShape(8.dp)
                             )
                     )
                     // paper2 버튼
                     Image(
-                        painter = painterResource(id = R.drawable.paper2),
+                        painter = painterResource(id = R.drawable.paper02),
                         contentDescription = "Paper 2",
                         modifier = Modifier
-                            .clickable { selectedBackgroundRes = R.drawable.paper2 }
+                            .clickable { selectedBackgroundRes = R.drawable.paper02 }
                             .border(
                                 width = 2.dp,
-                                color = if (selectedBackgroundRes == R.drawable.paper2) Color.Blue else Color.Transparent,
+                                color = if (selectedBackgroundRes == R.drawable.paper02) Color.Blue else Color.Transparent,
                                 shape = RoundedCornerShape(8.dp)
                             )
                     )
