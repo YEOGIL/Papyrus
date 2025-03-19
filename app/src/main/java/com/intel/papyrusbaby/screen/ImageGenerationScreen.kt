@@ -3,10 +3,7 @@ package com.intel.papyrusbaby.screen
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Rect
+import android.graphics.*
 import android.os.Build
 import android.provider.MediaStore
 import android.text.Layout
@@ -17,33 +14,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -75,14 +58,16 @@ fun ImageGenerationScreen(
     val handThinFont = FontFamily(Font(R.font.handwritingthin))
     var selectedFont by remember { mutableStateOf<FontFamily>(defaultFont) }
 
-    // 고정 이미지 크기
+    // 고정 이미지 해상도 (원본 생성)
     val fixedWidth = 1024
     val fixedHeight = 768
 
-    // 편지 이미지를 고정 크기로 생성
-    // 배경, 폰트, 텍스트가 바뀔 때마다 새로운 이미지를 생성하여 미리보기에 표시
-    val generatedBitmap = remember(backgroundRes, letterText, selectedFont) {
-        generateFixedSizeBitmap(fixedWidth, fixedHeight) { canvas ->
+    // 가장 최근에 생성된 원본 Bitmap 상태
+    var generatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    // 선택이 변경될 때마다 전체 해상도의 편지 이미지를 새로 생성 후 미리보기로 업데이트
+    LaunchedEffect(backgroundRes, selectedFont, letterText) {
+        generatedBitmap = generateFixedSizeBitmap(fixedWidth, fixedHeight) { canvas ->
             drawLetterOnCanvas(
                 context = context,
                 canvas = canvas,
@@ -98,14 +83,14 @@ fun ImageGenerationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()) // 화면이 넘어가면 스크롤
             .padding(16.dp)
     ) {
         TopBar(navController = navController, title = "이미지 생성")
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 편지지 선택
+        // 1) 편지지 선택
         BackgroundSelector(
             selectedBackgroundRes = backgroundRes,
             onBackgroundSelected = { backgroundRes = it }
@@ -113,18 +98,22 @@ fun ImageGenerationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 폰트 선택
+        // 2) 폰트 선택
         FontSelector(selectedFont = selectedFont, onFontSelected = { selectedFont = it })
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 생성된 편지 이미지 미리보기 (화면 너비에 맞춰 비율 유지)
-        GeneratedLetterPreview(bitmap = generatedBitmap)
+        // 3) 생성된 전체 원본 편지 이미지 미리보기 (전체 해상도를 화면 너비에 맞게 축소하여 표시)
+        if (generatedBitmap != null) {
+            GeneratedLetterPreview(bitmap = generatedBitmap!!)
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 공유/저장 버튼 (원본 Bitmap 사용)
-        ActionButtons(context = context, bitmap = generatedBitmap)
+        // 4) 공유/저장 버튼 (원본 Bitmap 사용)
+        if (generatedBitmap != null) {
+            ActionButtons(context = context, bitmap = generatedBitmap!!)
+        }
     }
 }
 
@@ -210,18 +199,18 @@ fun FontSelector(
     }
 }
 
+/**
+ * 생성된 Bitmap을 비율에 맞춰 화면에 표시하는 미리보기
+ * - 원본 전체 이미지를 화면 너비에 맞춰 축소하여 표시
+ */
 @Composable
 fun GeneratedLetterPreview(bitmap: Bitmap) {
-    // 원본 비율 계산: 가로/세로
-    val aspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-
-    // 화면 너비에 맞춰 aspectRatio로 보여주기
     Image(
         bitmap = bitmap.asImageBitmap(),
         contentDescription = "Generated Letter",
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(aspectRatio)
+            .aspectRatio(3f / 4f) // 가로 3 : 세로 4 비율로 고정
             .clip(RoundedCornerShape(16.dp)),
         contentScale = ContentScale.Fit
     )
@@ -236,7 +225,7 @@ fun ActionButtons(context: Context, bitmap: Bitmap) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 공유하기 버튼
+        // 공유하기 버튼 (원본 Bitmap 사용)
         Button(onClick = {
             try {
                 val imageUri = saveBitmapToCache(context, bitmap)
@@ -258,7 +247,7 @@ fun ActionButtons(context: Context, bitmap: Bitmap) {
             Text("공유하기")
         }
 
-        // 저장하기 버튼
+        // 저장하기 버튼 (원본 Bitmap 사용)
         Button(onClick = {
             try {
                 val savedUri = saveBitmapToGallery(context, bitmap)
@@ -276,12 +265,10 @@ fun ActionButtons(context: Context, bitmap: Bitmap) {
     }
 }
 
-/**
- * 고정 크기의 Bitmap을 생성하는 함수.
- */
+/** 고정 크기의 Bitmap을 생성하는 함수 (원본 해상도) */
 fun generateFixedSizeBitmap(
-    width: Int = 1024, // 원하는 고정 너비
-    height: Int = 768, // 원하는 고정 높이
+    width: Int = 768,
+    height: Int = 1024,
     onDraw: (Canvas) -> Unit
 ): Bitmap {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -290,9 +277,7 @@ fun generateFixedSizeBitmap(
     return bitmap
 }
 
-/**
- * 배경 이미지와 텍스트를 캔버스에 그려 실제 편지와 같은 이미지를 생성하는 함수.
- */
+/** 배경 이미지 + 텍스트를 그려 편지 형태로 만드는 함수 */
 fun drawLetterOnCanvas(
     context: Context,
     canvas: Canvas,
@@ -302,28 +287,26 @@ fun drawLetterOnCanvas(
     width: Int,
     height: Int
 ) {
-    // 1. 배경 이미지 그리기 (null 체크)
+    // 배경 이미지 그리기
     val bgBitmap = BitmapFactory.decodeResource(context.resources, backgroundRes)
     if (bgBitmap != null) {
         canvas.drawBitmap(bgBitmap, null, Rect(0, 0, width, height), null)
     } else {
-        canvas.drawColor(android.graphics.Color.WHITE)
+        canvas.drawColor(Color.White.toArgb())
     }
 
-    // 2. 텍스트 그리기 (StaticLayout 사용)
+    // 텍스트 그리기 (StaticLayout 사용)
     val textPaint = TextPaint().apply {
-        color = android.graphics.Color.BLACK
+        color = Color.Black.toArgb()
         val density = context.resources.displayMetrics.density
         textSize = 20 * density
-        textAlign = android.graphics.Paint.Align.LEFT // StaticLayout에 맞춘 LEFT 정렬
+        textAlign = Paint.Align.LEFT
         isAntiAlias = true
     }
 
-    // 여백 적용
     val padding = (50 * context.resources.displayMetrics.density).toInt()
     val textWidth = width - 2 * padding
 
-    // StaticLayout으로 줄바꿈 처리
     val staticLayout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         StaticLayout.Builder.obtain(letterText, 0, letterText.length, textPaint, textWidth)
             .setAlignment(Layout.Alignment.ALIGN_NORMAL)
@@ -343,17 +326,15 @@ fun drawLetterOnCanvas(
     }
 
     val textHeight = staticLayout.height
-    // 수직 중앙 배치
     canvas.save()
+    // 수직 중앙 배치
     val centerY = (height - textHeight) / 2f
     canvas.translate(padding.toFloat(), centerY)
     staticLayout.draw(canvas)
     canvas.restore()
 }
 
-/**
- * 갤러리에 Bitmap을 저장하는 함수 (JPEG 포맷).
- */
+/** 갤러리에 Bitmap을 저장 (JPEG) */
 fun saveBitmapToGallery(
     context: Context,
     bitmap: Bitmap,
@@ -376,9 +357,7 @@ fun saveBitmapToGallery(
     return uri
 }
 
-/**
- * 임시 캐시 디렉토리에 Bitmap을 저장하고 FileProvider를 통해 Uri를 생성 (공유용, PNG 포맷).
- */
+/** 임시 캐시 디렉토리에 Bitmap을 저장하고 FileProvider로 Uri 생성 (PNG) */
 fun saveBitmapToCache(
     context: Context,
     bitmap: Bitmap,
