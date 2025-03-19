@@ -182,8 +182,8 @@ fun WrittenLetterScreen(
                                 // 아카이브 저장
                                 val archiveItem = ArchiveItem(
                                     writtenDate = currentDate,
-                                    author = decodedWriter.ifEmpty { "무명 작가" },
-                                    docType = decodedDocumentType.ifEmpty { "단문" },
+                                    author = decodedWriter.ifEmpty { "선택 없음" },
+                                    docType = decodedDocumentType.ifEmpty { "선택 없음" },
                                     detail = decodedPrompt,
                                     generatedText = openAiResponse,
                                     themeList = decodedThemeList

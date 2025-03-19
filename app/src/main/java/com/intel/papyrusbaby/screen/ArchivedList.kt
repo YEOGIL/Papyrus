@@ -95,18 +95,18 @@ fun ArchivedListScreen(navController: NavController) {
                                 modifier = Modifier.padding(bottom = 4.dp)
                             )
                             Text(
-                                text = "작가: ${item.author}",
+                                text = "작가: ${item.author.ifEmpty { "선택 없음" }}",
                                 color = Color.White,
                                 modifier = Modifier.padding(bottom = 4.dp)
                             )
                             Text(
-                                text = "글 형식: ${item.docType}",
+                                text = "글 형식: ${item.docType.ifEmpty { "선택 없음" }}",
                                 color = Color.White,
                                 modifier = Modifier.padding(bottom = 4.dp)
                             )
                             if (item.themeList.isNotEmpty()) {
                                 Text(
-                                    "테마: ${item.themeList.joinToString(", ")}",
+                                    "테마: ${item.themeList.joinToString(", ").ifEmpty { "선택 없음" }}",
                                     color = Color.White,
                                     modifier = Modifier.padding(bottom = 4.dp)
                                 )
