@@ -3,7 +3,12 @@ package com.intel.papyrusbaby.screen
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
 import android.os.Build
 import android.provider.MediaStore
 import android.text.Layout
@@ -11,17 +16,34 @@ import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,27 +62,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
 import androidx.navigation.NavController
-import com.caverock.androidsvg.SVG
 import com.intel.papyrusbaby.R
 import java.io.File
 import java.io.FileOutputStream
-
-// SVG 파일을 Bitmap으로 변환하는 헬퍼 함수
-fun getBitmapFromSvgResource(context: Context, resId: Int, width: Int, height: Int): Bitmap? {
-    return try {
-        val inputStream = context.resources.openRawResource(resId)
-        val svg = SVG.getFromInputStream(inputStream)
-        svg.setDocumentWidth(width.toFloat())
-        svg.setDocumentHeight(height.toFloat())
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        svg.renderToCanvas(canvas)
-        bitmap
-    } catch (e: Exception) {
-        Log.e("SVGConversion", "Error converting SVG to Bitmap", e)
-        null
-    }
-}
 
 @Composable
 fun ImageGenerationScreen(
@@ -80,8 +84,10 @@ fun ImageGenerationScreen(
     val defaultTypeface = Typeface.DEFAULT
     val boldTypeface = ResourcesCompat.getFont(context, R.font.boldandclear) ?: Typeface.DEFAULT
     val cuteTypeface = ResourcesCompat.getFont(context, R.font.cute) ?: Typeface.DEFAULT
-    val handwritingTypeface = ResourcesCompat.getFont(context, R.font.handwriting) ?: Typeface.DEFAULT
-    val handwritingThinTypeface = ResourcesCompat.getFont(context, R.font.handwritingthin) ?: Typeface.DEFAULT
+    val handwritingTypeface =
+        ResourcesCompat.getFont(context, R.font.handwriting) ?: Typeface.DEFAULT
+    val handwritingThinTypeface =
+        ResourcesCompat.getFont(context, R.font.handwritingthin) ?: Typeface.DEFAULT
 
     // 3. FontFamily와 Typeface 매핑 (drawLetterOnCanvas에서 사용)
     val fontMapping = remember {
@@ -108,7 +114,10 @@ fun ImageGenerationScreen(
     // 상태 변경 시마다 새 이미지를 생성 (try-catch로 예외 로깅 추가)
     LaunchedEffect(backgroundRes, selectedFont, letterText) {
         try {
-            Log.d("ImageGenerationScreen", "LaunchedEffect triggered - backgroundRes: $backgroundRes, selectedFont: $selectedFont, letterText: $letterText")
+            Log.d(
+                "ImageGenerationScreen",
+                "LaunchedEffect triggered - backgroundRes: $backgroundRes, selectedFont: $selectedFont, letterText: $letterText"
+            )
             generatedBitmap = generateFixedSizeBitmap(fixedWidth, fixedHeight) { canvas ->
                 drawLetterOnCanvas(
                     context = context,
@@ -343,17 +352,22 @@ fun drawLetterOnCanvas(
     height: Int,
     fontMapping: Map<FontFamily, Typeface>
 ) {
-    Log.d("drawLetterOnCanvas", "Drawing with backgroundRes: $backgroundRes, letterText: $letterText")
+    Log.d(
+        "drawLetterOnCanvas",
+        "Drawing with backgroundRes: $backgroundRes, letterText: $letterText"
+    )
 
-    // SVG 파일을 Bitmap으로 변환 시도하고, 실패 시 기본 리소스로 로드
-    val bgBitmap = getBitmapFromSvgResource(context, backgroundRes, width, height)
+    // VectorDrawable을 Bitmap으로 변환 시도
+    val bgBitmap = getBitmapFromVectorDrawable(context, backgroundRes, width, height)
         ?: BitmapFactory.decodeResource(context.resources, backgroundRes)
+
     if (bgBitmap != null) {
         canvas.drawBitmap(bgBitmap, null, Rect(0, 0, width, height), null)
     } else {
         canvas.drawColor(Color.White.toArgb())
     }
 
+    // 텍스트 그리기
     val textPaint = TextPaint().apply {
         color = Color.Black.toArgb()
         val density = context.resources.displayMetrics.density
@@ -373,7 +387,15 @@ fun drawLetterOnCanvas(
             .build()
     } else {
         @Suppress("DEPRECATION")
-        StaticLayout(letterText, textPaint, textWidth, Layout.Alignment.ALIGN_NORMAL, 1.2f, 0f, false)
+        StaticLayout(
+            letterText,
+            textPaint,
+            textWidth,
+            Layout.Alignment.ALIGN_NORMAL,
+            1.2f,
+            0f,
+            false
+        )
     }
 
     val textHeight = staticLayout.height
@@ -418,6 +440,15 @@ fun saveBitmapToCache(
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
     }
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+}
+
+fun getBitmapFromVectorDrawable(context: Context, resId: Int, width: Int, height: Int): Bitmap? {
+    val drawable = AppCompatResources.getDrawable(context, resId) ?: return null
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, width, height)
+    drawable.draw(canvas)
+    return bitmap
 }
 
 @Preview(showBackground = true)
