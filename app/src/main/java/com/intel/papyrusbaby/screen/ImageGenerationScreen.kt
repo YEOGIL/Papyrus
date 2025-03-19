@@ -456,5 +456,6 @@ fun getBitmapFromVectorDrawable(context: Context, resId: Int, width: Int, height
 fun ImageGenerationScreenPreview() {
     val context = LocalContext.current
     val navController = NavController(context)
-    ImageGenerationScreen(navController = navController, letterText = "안녕하세요! 미리보기 텍스트입니다.")
+    val sampleText = "서로의 손길로 이룬 꿈의 조각들, 여러분의 노고가 이 프로젝트를 빛나게 했습니다. 한 걸음 한 걸음 함께해 온 시간 속에서, 여러분의 열정과 헌신이 얼마나 큰 힘이 되었는지 모릅니다. 힘든 순간마다 서로를 격려하며 나아간 우리, 그 과정이야말로 진정한 가치입니다. 이제는 그 결실을 바라보며, 서로의 수고를 인정하고 감사하는 마음으로 더 나아갑시다. 우리의 작은 발걸음이 모여 큰 길을 이룰 것임을 믿습니다. 함께 해주셔서 진심으로 고맙습니다."
+    ImageGenerationScreen(navController = navController, letterText = sampleText)
 }
