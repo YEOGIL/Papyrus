@@ -15,12 +15,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Checkbox
@@ -30,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -46,52 +49,76 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.intel.papyrusbaby.R
+import com.intel.papyrusbaby.firebase.Author
+import com.intel.papyrusbaby.firebase.AuthorRepository
 import com.intel.papyrusbaby.util.ThemeSelectionDialog
 import java.net.URLEncoder
 
 enum class ThemeType(val displayName: String) {
-    Theme01("결혼"),
-    Theme02("출산"),
-    Theme03("입학"),
-    Theme04("합격"),
-    Theme05("실패"),
-    Theme06("졸업"),
-    Theme07("군입대"),
-    Theme08("환갑"),
-    Theme09("상견례"),
-    Theme10("크리스마스"),
-    Theme11("삼일절"),
-    Theme12("광복절"),
-    Theme13("개천절"),
-    Theme14("부활절"),
-    Theme15("개업")
+    Theme01("감사"),
+    Theme02("결혼"),
+    Theme03("출산"),
+    Theme04("입학"),
+    Theme05("합격"),
+    Theme06("격려"),
+    Theme07("실패"),
+    Theme08("졸업"),
+    Theme09("군입대"),
+    Theme10("환갑"),
+    Theme11("상견례"),
+    Theme12("크리스마스"),
+    Theme13("삼일절"),
+    Theme14("광복절"),
+    Theme15("개천절"),
+    Theme16("부활절"),
+    Theme17("개업")
 }
 
 @Composable
-fun WriteLetterScreen(navController: NavController) {
+fun WriteLetterScreen(
+    navController: NavController,
+    writerParam: String = ""
+) {
     // 키보드 닫기 위한 focusManager
     val focusManager = LocalFocusManager.current
 
-    // 현재 입력 텍스트 상태 관리
-    var currentInput by remember { mutableStateOf("") }
+    // Firestore에서 작가 목록 로드
+    var authors by remember { mutableStateOf<List<Author>>(emptyList()) }
+    var isAuthorsLoading by remember { mutableStateOf(true) }
 
-    // 옵션 선택 상태 관리
+    LaunchedEffect(Unit) {
+        isAuthorsLoading = true
+        val result = AuthorRepository.fetchAuthors()
+        authors = result
+        isAuthorsLoading = false
+    }
+
+    // Dropdown에 표시할 '작가 이름' (DB에 이미 한글로 저장되어 있다면 그대로 사용)
+    val authorNames = authors.map { it.name }
+
+    // 드롭다운 상태
     var selectedWriters by remember { mutableStateOf(listOf<String>()) }
     var selectedFormats by remember { mutableStateOf(listOf<String>()) }
 
-    // 서버 응답을 표시하기 위한 상태 변수
-    var isLoading by remember { mutableStateOf(false) }
-    var openAiResponse by remember { mutableStateOf("") }
+    // NavArgument로 넘어온 writerParam이 있으면 초기 선택값에 반영
+    LaunchedEffect(writerParam) {
+        if (writerParam.isNotEmpty()) {
+            selectedWriters = listOf(writerParam)
+        }
+    }
 
-    // 테마 필터를 위한 상태 변수
+    // 입력 텍스트
+    var currentInput by remember { mutableStateOf("") }
+
+    // 테마 관련
     val allThemes = ThemeType.entries.toList()
     var selectedThemes by remember { mutableStateOf(listOf<ThemeType>()) }
-
-    // 테마 선택 팝업 표시 여부
     var showThemeSelectionDialog by remember { mutableStateOf(false) }
+
     if (showThemeSelectionDialog) {
         ThemeSelectionDialog(
             allThemes = allThemes,
@@ -104,40 +131,46 @@ fun WriteLetterScreen(navController: NavController) {
         )
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(Color(0xFFFFFAE6))
-        .pointerInput(Unit) {
-            detectTapGestures(onTap = {
-                focusManager.clearFocus()
-            })
-        }) {
+    // 화면 레이아웃
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFFFFAE6))
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            }
+    ) {
         Spacer(modifier = Modifier.height(20.dp))
+
+        // 첫째 줄: 작가 / 글 종류 필터
         Row(modifier = Modifier.fillMaxWidth()) {
+            // 작가 드롭다운
             ExpandableFilter(
                 title = if (selectedWriters.isNotEmpty()) {
                     selectedWriters.joinToString(", ")
                 } else {
                     "작가"
                 },
-                options = listOf("윤동주", "김소월", "셰익스피어", "찰스 디킨스", "한강"),
+                options = authorNames,
                 selectedOptions = selectedWriters,
                 onOptionSelected = { option, selected ->
                     selectedWriters = if (selected) {
-                        listOf(option) // 기존 선택 초기화 후 새 옵션만 추가
+                        listOf(option)
                     } else {
-                        emptyList()    // 선택 해제 시 빈 리스트로
+                        emptyList()
                     }
                 },
                 modifier = Modifier.weight(1f)
             )
+
+            // 글 종류 드롭다운
             ExpandableFilter(
                 title = if (selectedFormats.isNotEmpty()) {
                     selectedFormats.joinToString(", ")
                 } else {
                     "글 종류"
                 },
-                options = listOf("일기", "편지", "반성문", "단문", "엽서"),
+                options = listOf("일기", "편지", "장문", "단문", "엽서"),
                 selectedOptions = selectedFormats,
                 onOptionSelected = { option, selected ->
                     selectedFormats = if (selected) {
@@ -152,6 +185,7 @@ fun WriteLetterScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.size(10.dp))
 
+        // 둘째 줄: 테마 아이콘 + 테마 목록
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -164,34 +198,48 @@ fun WriteLetterScreen(navController: NavController) {
                 tint = Color.Unspecified,
                 modifier = Modifier.clickable { showThemeSelectionDialog = true }
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            // 선택된 테마를 표시(선택 토글은 팝업에서 함)
             Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                selectedThemes.forEach { theme ->
+                allThemes.forEach { theme ->
+                    val isSelected = selectedThemes.contains(theme)
                     Box(
                         modifier = Modifier
                             .border(
-                                1.dp,
-                                shape = RoundedCornerShape(5.dp),
-                                color = Color(0xFF94907F)
+                                width = 1.dp,
+                                color = Color(0xFF94907F),
+                                shape = RoundedCornerShape(5.dp)
                             )
+                            .background(
+                                color = if (isSelected) Color(0xFF5C5945) else Color.Transparent,
+                                shape = RoundedCornerShape(5.dp)
+                            )
+                            .clickable {
+                                // 선택/해제 토글
+                                selectedThemes = if (isSelected) {
+                                    selectedThemes - theme
+                                } else {
+                                    selectedThemes + theme
+                                }
+                            }
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = theme.displayName,
-                            color = Color(0xFF5C5945),
+                            color = if (isSelected) Color(0xFFFFFAE6) else Color(0xFF5C5945),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
             }
         }
 
-        // 프롬프트 입력 영역
+        // 프롬프트 입력 + 전송 버튼
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -205,32 +253,31 @@ fun WriteLetterScreen(navController: NavController) {
             )
             IconButton(onClick = {
                 if (currentInput.isNotBlank()) {
-                    openAiResponse = ""
-                    isLoading = true
-
-                    // 입력값을 지역 변수에 저장
+                    // URL 인코딩
                     val authorInput = selectedWriters.joinToString(", ")
                     val documentTypeInput = selectedFormats.joinToString(", ")
                     val promptInput = currentInput
 
-                    // URL 인코딩 (전달 시 특수문자 문제 방지)
                     val encodedAuthor = URLEncoder.encode(authorInput, "UTF-8")
                     val encodedDocType = URLEncoder.encode(documentTypeInput, "UTF-8")
                     val encodedPrompt = URLEncoder.encode(promptInput, "UTF-8")
 
+                    val themeStringList = selectedThemes.map { it.displayName }
+                    val joinedTheme = themeStringList.joinToString(",")
+                    val encodedTheme = URLEncoder.encode(joinedTheme, "UTF-8")
 
-                    // 입력값 및 선택값 초기화
+                    // Navigate to WrittenLetterScreen
+                    navController.navigate(
+                        "writtenLetter?writer=$encodedAuthor&documentType=$encodedDocType&prompt=$encodedPrompt&theme=$encodedTheme"
+                    )
+
+                    // 값 초기화
                     currentInput = ""
                     selectedWriters = emptyList()
                     selectedFormats = emptyList()
                     focusManager.clearFocus()
-
-                    // WrittenLetterScreen으로 이동하며 인자 전달
-                    navController.navigate("writtenLetter?writer=$encodedAuthor&documentType=$encodedDocType&prompt=$encodedPrompt")
-
                 }
-            }
-            ) {
+            }) {
                 Icon(
                     painter = painterResource(R.drawable.icon_writeletter),
                     tint = Color.Unspecified,
@@ -238,24 +285,29 @@ fun WriteLetterScreen(navController: NavController) {
                 )
             }
         }
-
     }
 }
 
 // 사용자 선택 정보를 담을 data class
 data class UserSelect(
-    val writer: String, val documentType: String, val prompt: String
+    val writer: String,
+    val documentType: String,
+    val prompt: String
 )
 
+// 간단한 커스텀 입력 필드
 @Composable
 fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modifier: Modifier) {
-    BasicTextField(value = currentInput,
+    BasicTextField(
+        value = currentInput,
         onValueChange = onValueChange,
         modifier = modifier
             .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(10.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
         textStyle = TextStyle(
-            color = Color(0xFF5C5945), fontSize = 18.sp, fontWeight = FontWeight.Bold
+            color = Color(0xFF5C5945),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
         ),
         decorationBox = { innerTextField ->
             if (currentInput.isEmpty()) {
@@ -267,16 +319,18 @@ fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modi
                 )
             }
             innerTextField()
-        })
+        }
+    )
 }
 
+// 드롭다운 필터
 @Composable
 fun ExpandableFilter(
     title: String = "Size",
     options: List<String>,
     selectedOptions: List<String>,
     onOptionSelected: (String, Boolean) -> Unit,
-    modifier: Modifier = Modifier.fillMaxWidth() // 기본값은 fillMaxWidth()
+    modifier: Modifier = Modifier.fillMaxWidth()
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -286,12 +340,14 @@ fun ExpandableFilter(
             .clip(RoundedCornerShape(20.dp))
             .border(width = 1.dp, color = Color(0xFF94907F), shape = RoundedCornerShape(20.dp))
     ) {
-        // 필터 탭 헤더: 클릭 시 DropdownMenu를 표시합니다.
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .clickable { expanded = true }
-            .padding(horizontal = 10.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically) {
+        // 필터 탭 헤더 (클릭 시 DropdownMenu 표시)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true }
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = title,
                 fontSize = 16.sp,
@@ -305,49 +361,72 @@ fun ExpandableFilter(
             )
         }
 
-        // DropdownMenu를 사용하여 필터 옵션들을 오버레이로 표시합니다.
+        // DropdownMenu
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .padding(horizontal = 40.dp)
-                .fillMaxWidth()
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 0.dp, topEnd = 0.dp, bottomEnd = 10.dp, bottomStart = 10.dp
-                    )
-                )
-                .background(Color(0xFFF0F0F0))
-                .border(
-                    width = 0.5.dp, color = Color(0xFF777777), shape = RoundedCornerShape(
-                        bottomEnd = 10.dp, bottomStart = 10.dp
-                    )
-                )
+            modifier = Modifier.background(Color.Transparent)
+//                .padding(horizontal = 40.dp)
+//                .fillMaxWidth()
+//                .clip(
+//                    RoundedCornerShape(
+//                        topStart = 0.dp, topEnd = 0.dp, bottomEnd = 10.dp, bottomStart = 10.dp
+//                    )
+//                )
+//                .border(
+//                    width = 0.5.dp,
+//                    color = Color(0xFF777777),
+//                    shape = RoundedCornerShape(bottomEnd = 10.dp, bottomStart = 10.dp)
+//                )
         ) {
-            options.forEach { option ->
-                DropdownMenuItem(onClick = {
-                    val currentlySelected = selectedOptions.contains(option)
-                    onOptionSelected(option, !currentlySelected)
-                    expanded = false
-                }, text = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(checked = selectedOptions.contains(option),
-                            onCheckedChange = { checked ->
-                                onOptionSelected(option, checked)
+
+            Box(
+                modifier = Modifier
+                    .background(Color(0xFFF0F0F0))
+                    .border(
+                        width = 0.5.dp,
+                        color = Color(0xFF777777),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+            ) {
+                // 최대 높이: 화면 높이의 50%
+                val configuration = LocalConfiguration.current
+                val maxDropdownHeight = configuration.screenHeightDp.dp * 0.5f
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = maxDropdownHeight)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    options.forEach { option ->
+                        DropdownMenuItem(
+                            onClick = {
+                                val currentlySelected = selectedOptions.contains(option)
+                                onOptionSelected(option, !currentlySelected)
                                 expanded = false
-                            })
-                        Text(
-                            text = option, modifier = Modifier.padding(start = 5.dp)
+                            },
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = selectedOptions.contains(option),
+                                        onCheckedChange = { checked ->
+                                            onOptionSelected(option, checked)
+                                            expanded = false
+                                        }
+                                    )
+                                    Text(
+                                        text = option,
+                                        modifier = Modifier.padding(start = 5.dp)
+                                    )
+                                }
+                            }
                         )
                     }
-                })
+                }
             }
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable

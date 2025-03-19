@@ -1,6 +1,7 @@
 package com.intel.papyrusbaby.util
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -66,43 +65,48 @@ fun ThemeSelectionDialog(
                         .weight(1f)
                         .verticalScroll(rememberScrollState())
                 ) {
+                    // 1) 테마 목록을 Box로 표시 (체크박스 대신 HomeScreen 스타일)
                     allThemes.forEach { theme ->
-                        val isChecked = theme in tempSelected
-                        Row(
+                        val isSelected = theme in tempSelected
+
+                        // 클릭하면 선택/해제 토글
+                        Box(
                             modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .border(
+                                    1.dp,
+                                    shape = RoundedCornerShape(5.dp),
+                                    color = Color(0xFF5C5945)
+                                )
+                                .background(
+                                    color = if (isSelected) Color(0xFF5C5945) else Color.Transparent,
+                                    shape = RoundedCornerShape(5.dp)
+                                )
                                 .clickable {
-                                    // 체크/해제 토글
-                                    tempSelected = if (isChecked) {
+                                    tempSelected = if (isSelected) {
                                         tempSelected - theme
                                     } else {
                                         tempSelected + theme
                                     }
                                 }
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
                         ) {
-                            Checkbox(
-                                checked = isChecked,
-                                onCheckedChange = { checked ->
-                                    tempSelected = if (checked) {
-                                        tempSelected + theme
-                                    } else {
-                                        tempSelected - theme
-                                    }
-                                }
+                            Text(
+                                text = theme.displayName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isSelected) Color(0xFFFFFAE6) else Color(0xFF5C5945)
                             )
-                            Text(theme.displayName)
                         }
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 확인 & 취소 버튼
+                // 2) 확인 & 취소 버튼
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.1f)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "취소",

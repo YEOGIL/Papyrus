@@ -129,13 +129,19 @@ fun WrittenLetterScreen(
             color = Color(0xFF1B1818)
         )
         Text(
-            text = "작가: ${decodedWriter.ifEmpty { "무명 작가" }}",
+            text = "작가: ${decodedWriter.ifEmpty { "선택 없음" }}",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF1B1818)
         )
         Text(
-            text = "글 형식: ${decodedDocumentType.ifEmpty { "단문" }}",
+            text = "글 형식: ${decodedDocumentType.ifEmpty { "선택 없음" }}",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF1B1818)
+        )
+        Text(
+            text = "테마: ${decodedThemeList.joinToString(", ").ifEmpty { "선택 없음" }}",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF1B1818)
@@ -182,8 +188,10 @@ fun WrittenLetterScreen(
                                     author = decodedWriter.ifEmpty { "무명 작가" },
                                     docType = decodedDocumentType.ifEmpty { "단문" },
                                     detail = decodedPrompt,
-                                    generatedText = openAiResponse
+                                    generatedText = openAiResponse,
+                                    themeList = decodedThemeList
                                 )
+
 
                                 // 코루틴 처리
                                 scope.launch {
@@ -217,7 +225,7 @@ fun WrittenLetterScreen(
             }
         }
         val clipboardManager = LocalClipboardManager.current
-        val context = LocalContext.current
+//        val context = LocalContext.current
         if (isFinished) {
             Spacer(modifier = Modifier.height(20.dp))
             Row(
@@ -283,11 +291,11 @@ fun WrittenLetterScreen(
                         .padding(horizontal = 10.dp, vertical = 5.dp))
             }
 
-            if (generationSuccessful) {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    FontSelectionScreen(openAiResponse)
-                }
-            }
+//            if (generationSuccessful) {
+//                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+//                    FontSelectionScreen(openAiResponse)
+//                }
+//            }
         }
     }
 }
@@ -305,60 +313,60 @@ fun LoadingAnimation() {
     )
 }
 
-@Composable
-fun FontSelectionScreen(openAiResponse: String) {
-    // 기본 폰트와 커스텀 폰트 정의
-    val defaultFont = FontFamily.Default
-    val boldAndClearFont = FontFamily(Font(R.font.boldandclear))
-    val cuteFont = FontFamily(Font(R.font.cute))
-    val handwritingFont = FontFamily(Font(R.font.handwriting))
-    val handwritingThinFont = FontFamily(Font(R.font.handwritingthin))
-
-    // 선택된 폰트를 상태로 관리 (초기값은 기본 폰트)
-    var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        // 폰트 선택 버튼 Row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            // Default
-            Button(onClick = { selectedFontFamily = defaultFont }) {
-                Text("Def")
-            }
-            //Bold & Clear
-            Button(onClick = { selectedFontFamily = boldAndClearFont }) {
-                Text("Bold")
-            }
-            // Cute
-            Button(onClick = { selectedFontFamily = cuteFont }) {
-                Text("Cute")
-            }
-            // Handwriting
-            Button(onClick = { selectedFontFamily = handwritingFont }) {
-                Text("Hand")
-            }
-            // Handwriting Thin
-            Button(onClick = { selectedFontFamily = handwritingThinFont }) {
-                Text("HandT")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 선택한 폰트로 openAiResponse 출력
-        Text(
-            text = openAiResponse,
-            fontSize = 16.sp,
-            fontFamily = selectedFontFamily,
-            color = Color(0xFF221F10)
-        )
-    }
-}
+//@Composable
+//fun FontSelectionScreen(openAiResponse: String) {
+//    // 기본 폰트와 커스텀 폰트 정의
+//    val defaultFont = FontFamily.Default
+//    val boldAndClearFont = FontFamily(Font(R.font.boldandclear))
+//    val cuteFont = FontFamily(Font(R.font.cute))
+//    val handwritingFont = FontFamily(Font(R.font.handwriting))
+//    val handwritingThinFont = FontFamily(Font(R.font.handwritingthin))
+//
+//    // 선택된 폰트를 상태로 관리 (초기값은 기본 폰트)
+//    var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
+//
+//    Column(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(16.dp)
+//    ) {
+//
+//        // 폰트 선택 버튼 Row
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth(),
+//            horizontalArrangement = Arrangement.SpaceEvenly
+//        ) {
+//            // Default
+//            Button(onClick = { selectedFontFamily = defaultFont }) {
+//                Text("Def")
+//            }
+//            //Bold & Clear
+//            Button(onClick = { selectedFontFamily = boldAndClearFont }) {
+//                Text("Bold")
+//            }
+//            // Cute
+//            Button(onClick = { selectedFontFamily = cuteFont }) {
+//                Text("Cute")
+//            }
+//            // Handwriting
+//            Button(onClick = { selectedFontFamily = handwritingFont }) {
+//                Text("Hand")
+//            }
+//            // Handwriting Thin
+//            Button(onClick = { selectedFontFamily = handwritingThinFont }) {
+//                Text("HandT")
+//            }
+//        }
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        // 선택한 폰트로 openAiResponse 출력
+//        Text(
+//            text = openAiResponse,
+//            fontSize = 16.sp,
+//            fontFamily = selectedFontFamily,
+//            color = Color(0xFF221F10)
+//        )
+//    }
+//}

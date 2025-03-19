@@ -29,6 +29,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.intel.papyrusbaby.firebase.Author
+import java.net.URLEncoder
 
 @Composable
 fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: () -> Unit) {
@@ -146,11 +147,13 @@ fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: ()
                                 text = "작성하기",
                                 color = Color(0xFFFFFAE6),
                                 modifier = Modifier
-                                    .padding((8.dp))
+                                    .padding(8.dp)
                                     .clickable {
-                                        // 예: 클릭 시 "write" 화면으로 이동
+                                        // 1) 다이얼로그 닫기
                                         onDismiss()
-                                        navController.navigate("write") {
+
+                                        // 2) author.name 을 "write?writer=..." 로 이동
+                                        navController.navigate("write?writer=${author.name}") {
                                             launchSingleTop = true
                                         }
                                     }

@@ -82,7 +82,15 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             composable("home") { HomeScreen(navController) }
-                            composable("write") { WriteLetterScreen(navController) }
+                            composable(
+                                route = "write?writer={writer}",
+                                arguments = listOf(
+                                    navArgument("writer") { defaultValue = "" }
+                                )
+                            ) { backStackEntry ->
+                                val writerParam = backStackEntry.arguments?.getString("writer") ?: ""
+                                WriteLetterScreen(navController, writerParam)
+                            }
                             composable(
                                 route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}&theme={theme}",
                                 arguments = writtenLetterArgs

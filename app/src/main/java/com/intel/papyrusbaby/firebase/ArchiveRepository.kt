@@ -22,34 +22,32 @@ object ArchiveRepository {
                 .document("counterDoc")
 
             val snapshot = transaction.get(counterRef)
-
             if (!snapshot.exists()) {
-                // 문서가 없으면 새로 만들고 1부터 시작
                 transaction.set(counterRef, mapOf("lastIndex" to 1L))
-                return@runTransaction 1L
+                1L
             } else {
-                // 문서가 있으면 +1
                 val currentIndex = snapshot.getLong("lastIndex") ?: 0L
                 val updatedIndex = currentIndex + 1
                 transaction.update(counterRef, "lastIndex", updatedIndex)
-                return@runTransaction updatedIndex
+                updatedIndex
             }
         }.await()
 
-        // (2) Firestore 난수 ID를 자동 생성 (add() 또는 push)
+        // (2) Firestore 난수 ID를 자동 생성
         val newDocRef = firestore.collection("users")
             .document(user.uid)
             .collection("generatedArchives")
-            .document()  // 여기서 랜덤 ID 생성
+            .document()
 
-        // (3) 문서에 인덱스 필드 저장
+        // (3) 문서에 인덱스 필드 및 테마 목록 저장
         val data = mapOf(
-            "index" to newIndex, // 숫자 인덱스
+            "index" to newIndex,
             "writtenDate" to archiveItem.writtenDate,
             "author" to archiveItem.author,
             "docType" to archiveItem.docType,
             "detail" to archiveItem.detail,
-            "generatedText" to archiveItem.generatedText
+            "generatedText" to archiveItem.generatedText,
+            "themeList" to archiveItem.themeList // ← 추가
         )
 
         newDocRef.set(data).await()
@@ -57,7 +55,6 @@ object ArchiveRepository {
 
     suspend fun getAllArchives(): List<ArchiveItem> {
         val user = auth.currentUser ?: return emptyList()
-        // (4) index 내림차순으로 정렬해서 가져오기
         val snapshot = firestore.collection("users")
             .document(user.uid)
             .collection("generatedArchives")
@@ -67,19 +64,22 @@ object ArchiveRepository {
 
         return snapshot.documents.mapNotNull { doc ->
             val data = doc.data ?: return@mapNotNull null
+            val themeList = data["themeList"] as? List<String> ?: emptyList()
+
             ArchiveItem(
                 docId = doc.id,
                 writtenDate = data["writtenDate"] as? String ?: "",
                 author = data["author"] as? String ?: "",
                 docType = data["docType"] as? String ?: "",
                 detail = data["detail"] as? String ?: "",
-                generatedText = data["generatedText"] as? String ?: ""
+                generatedText = data["generatedText"] as? String ?: "",
+                themeList = themeList
             )
         }
     }
 
     suspend fun getArchiveItem(docId: String): ArchiveItem? {
-        val user = FirebaseAuth.getInstance().currentUser ?: return null
+        val user = auth.currentUser ?: return null
         val doc = firestore.collection("users")
             .document(user.uid)
             .collection("generatedArchives")
@@ -88,13 +88,16 @@ object ArchiveRepository {
             .await()
 
         val data = doc.data ?: return null
+        val themeList = data["themeList"] as? List<String> ?: emptyList()
+
         return ArchiveItem(
+            docId = doc.id,
             writtenDate = data["writtenDate"] as? String ?: "",
             author = data["author"] as? String ?: "",
             docType = data["docType"] as? String ?: "",
             detail = data["detail"] as? String ?: "",
             generatedText = data["generatedText"] as? String ?: "",
-            docId = doc.id
+            themeList = themeList
         )
     }
 }

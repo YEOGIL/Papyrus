@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,7 +51,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.SystemFontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
@@ -59,7 +59,6 @@ import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.firebase.ArchiveItem
 import com.intel.papyrusbaby.firebase.ArchiveRepository
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
@@ -69,7 +68,6 @@ fun ArchivedListContentsScreen(
     navController: NavController
 ) {
     // 로컬 컨텍스트, 코루틴 스코프
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     // Firestore에서 받아올 ArchiveItem
@@ -125,7 +123,7 @@ fun ShowArchivedLetterContents(
     ) {
 
         // 1) 메타 정보 (작성일, 작가 등)
-        Box(){
+        Box() {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "작성일: ${archiveItem.writtenDate}",
@@ -134,13 +132,19 @@ fun ShowArchivedLetterContents(
                     color = Color(0xFF1B1818)
                 )
                 Text(
-                    text = "작가: ${archiveItem.author.ifEmpty { "무명 작가" }}",
+                    text = "작가: ${archiveItem.author.ifEmpty { "선택 없음" }}",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF1B1818)
                 )
                 Text(
-                    text = "글 형식: ${archiveItem.docType.ifEmpty { "단문" }}",
+                    text = "글 형식: ${archiveItem.docType.ifEmpty { "선택 없음" }}",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1B1818)
+                )
+                Text(
+                    text = "테마: ${archiveItem.themeList.joinToString(", ").ifEmpty { "선택 없음" }}",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF1B1818)
@@ -313,12 +317,12 @@ fun ShowImageGenerationDialog(
     onSave: (Bitmap) -> Unit
 ) {
     // 배경 선택: drawable에 paper1, paper2가 있다고 가정 (R.drawable.paper1, R.drawable.paper2)
-    var selectedBackgroundRes by remember { mutableStateOf(R.drawable.paper1) }
+    var selectedBackgroundRes by remember { mutableIntStateOf(R.drawable.paper1) }
     // 폰트 선택
     var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
     // 미리보기 영역의 크기를 측정하기 위한 상태
-    var previewWidth by remember { mutableStateOf(0) }
-    var previewHeight by remember { mutableStateOf(0) }
+    var previewWidth by remember { mutableIntStateOf(0) }
+    var previewHeight by remember { mutableIntStateOf(0) }
     // 미리보기 영역에 그려진 내용을 Bitmap으로 캡처한 결과 (실제 구현 시 onShare/onSave에서 호출)
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
@@ -433,7 +437,7 @@ fun ShowImageGenerationDialog(
                             .padding(16.dp)
                     )
                 }
-                Row(modifier = Modifier.fillMaxSize(), ) {
+                Row(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -441,27 +445,31 @@ fun ShowImageGenerationDialog(
                     ) {
                         Button(onClick = {
                             if (previewWidth > 0 && previewHeight > 0) {
-                                val bitmap = generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
-                                    // 1. 배경 이미지 그리기
-                                    val bgBitmap = BitmapFactory.decodeResource(context.resources, selectedBackgroundRes)
-                                    val destRect = Rect(0, 0, previewWidth, previewHeight)
-                                    canvas.drawBitmap(bgBitmap, null, destRect, null)
+                                val bitmap =
+                                    generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
+                                        // 1. 배경 이미지 그리기
+                                        val bgBitmap = BitmapFactory.decodeResource(
+                                            context.resources,
+                                            selectedBackgroundRes
+                                        )
+                                        val destRect = Rect(0, 0, previewWidth, previewHeight)
+                                        canvas.drawBitmap(bgBitmap, null, destRect, null)
 
-                                    // 2. 텍스트 그리기 (중앙 정렬)
-                                    val paint = android.graphics.Paint().apply {
-                                        color = android.graphics.Color.BLACK
-                                        // 20.sp를 픽셀 단위로 변환 (대략적으로 density 곱)
-                                        val density = context.resources.displayMetrics.density
-                                        textSize = 20 * density
-                                        textAlign = android.graphics.Paint.Align.CENTER
+                                        // 2. 텍스트 그리기 (중앙 정렬)
+                                        val paint = android.graphics.Paint().apply {
+                                            color = android.graphics.Color.BLACK
+                                            // 20.sp를 픽셀 단위로 변환 (대략적으로 density 곱)
+                                            val density = context.resources.displayMetrics.density
+                                            textSize = 20 * density
+                                            textAlign = android.graphics.Paint.Align.CENTER
+                                        }
+                                        // 텍스트의 수직 중앙 위치 계산
+                                        val fm = paint.fontMetrics
+                                        val textHeight = fm.descent - fm.ascent
+                                        val x = previewWidth / 2f
+                                        val y = previewHeight / 2f + (textHeight / 2f - fm.descent)
+                                        canvas.drawText(letterText, x, y, paint)
                                     }
-                                    // 텍스트의 수직 중앙 위치 계산
-                                    val fm = paint.fontMetrics
-                                    val textHeight = fm.descent - fm.ascent
-                                    val x = previewWidth / 2f
-                                    val y = previewHeight / 2f + (textHeight / 2f - fm.descent)
-                                    canvas.drawText(letterText, x, y, paint)
-                                }
                                 // 공유용: 임시 캐시 파일에 저장 후 FileProvider를 통한 Uri 생성
                                 val imageUri = saveBitmapToCache(context, bitmap)
                                 imageUri?.let { uri ->
@@ -471,7 +479,12 @@ fun ShowImageGenerationDialog(
                                         type = "image/jpeg"
                                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
-                                    context.startActivity(Intent.createChooser(shareIntent, "이미지 공유"))
+                                    context.startActivity(
+                                        Intent.createChooser(
+                                            shareIntent,
+                                            "이미지 공유"
+                                        )
+                                    )
                                 }
                             }
                         }) {
@@ -479,27 +492,31 @@ fun ShowImageGenerationDialog(
                         }
                         Button(onClick = {
                             if (previewWidth > 0 && previewHeight > 0) {
-                                val bitmap = generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
-                                    // 1. 배경 이미지 그리기
-                                    val bgBitmap = BitmapFactory.decodeResource(context.resources, selectedBackgroundRes)
-                                    val destRect = Rect(0, 0, previewWidth, previewHeight)
-                                    canvas.drawBitmap(bgBitmap, null, destRect, null)
+                                val bitmap =
+                                    generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
+                                        // 1. 배경 이미지 그리기
+                                        val bgBitmap = BitmapFactory.decodeResource(
+                                            context.resources,
+                                            selectedBackgroundRes
+                                        )
+                                        val destRect = Rect(0, 0, previewWidth, previewHeight)
+                                        canvas.drawBitmap(bgBitmap, null, destRect, null)
 
-                                    // 2. 텍스트 그리기 (중앙 정렬)
-                                    val paint = android.graphics.Paint().apply {
-                                        color = android.graphics.Color.BLACK
-                                        // 20.sp를 픽셀 단위로 변환 (대략적으로 density 곱)
-                                        val density = context.resources.displayMetrics.density
-                                        textSize = 20 * density
-                                        textAlign = android.graphics.Paint.Align.CENTER
+                                        // 2. 텍스트 그리기 (중앙 정렬)
+                                        val paint = android.graphics.Paint().apply {
+                                            color = android.graphics.Color.BLACK
+                                            // 20.sp를 픽셀 단위로 변환 (대략적으로 density 곱)
+                                            val density = context.resources.displayMetrics.density
+                                            textSize = 20 * density
+                                            textAlign = android.graphics.Paint.Align.CENTER
+                                        }
+                                        // 텍스트의 수직 중앙 위치 계산
+                                        val fm = paint.fontMetrics
+                                        val textHeight = fm.descent - fm.ascent
+                                        val x = previewWidth / 2f
+                                        val y = previewHeight / 2f + (textHeight / 2f - fm.descent)
+                                        canvas.drawText(letterText, x, y, paint)
                                     }
-                                    // 텍스트의 수직 중앙 위치 계산
-                                    val fm = paint.fontMetrics
-                                    val textHeight = fm.descent - fm.ascent
-                                    val x = previewWidth / 2f
-                                    val y = previewHeight / 2f + (textHeight / 2f - fm.descent)
-                                    canvas.drawText(letterText, x, y, paint)
-                                }
                                 val savedUri = saveBitmapToGallery(context, bitmap)
                                 if (savedUri != null) {
                                     // 저장 성공
@@ -531,7 +548,11 @@ fun ShowImageGenerationDialog(
 }
 
 // 갤러리에 Bitmap을 저장하는 함수 (MediaStore API 사용)
-fun saveBitmapToGallery(context: Context, bitmap: Bitmap, fileName: String = "generated_image"): Uri? {
+fun saveBitmapToGallery(
+    context: Context,
+    bitmap: Bitmap,
+    fileName: String = "generated_image"
+): Uri? {
     val contentValues = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, "$fileName.jpg")
         put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")

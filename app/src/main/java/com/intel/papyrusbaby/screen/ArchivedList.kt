@@ -2,7 +2,6 @@ package com.intel.papyrusbaby.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -60,7 +59,8 @@ fun ArchivedListScreen(navController: NavController) {
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "보관함이 비어있습니다.\n당신의 이야기를 채워보세요.",
+                Text(
+                    text = "보관함이 비어있습니다.\n당신의 이야기를 채워보세요.",
                     color = Color(0xFF94907F),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -104,6 +104,13 @@ fun ArchivedListScreen(navController: NavController) {
                                 color = Color.White,
                                 modifier = Modifier.padding(bottom = 4.dp)
                             )
+                            if (item.themeList.isNotEmpty()) {
+                                Text(
+                                    "테마: ${item.themeList.joinToString(", ")}",
+                                    color = Color.White,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                            }
                             Text(
                                 text = "주제: ${item.detail}",
                                 color = Color.White,
