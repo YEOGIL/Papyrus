@@ -18,6 +18,7 @@ import com.intel.papyrusbaby.firebase.AuthScreenEmailPassword
 import com.intel.papyrusbaby.screen.ArchivedListContentsScreen
 import com.intel.papyrusbaby.screen.ArchivedListScreen
 import com.intel.papyrusbaby.screen.HomeScreen
+import com.intel.papyrusbaby.screen.ImageGenerationScreen
 import com.intel.papyrusbaby.screen.WriteLetterScreen
 import com.intel.papyrusbaby.screen.WrittenLetterScreen
 import com.intel.papyrusbaby.ui.theme.PapyrusBabyTheme
@@ -121,6 +122,18 @@ class MainActivity : ComponentActivity() {
                                 ArchivedListContentsScreen(
                                     docId = docId,
                                     navController = navController
+                                )
+                            }
+                            composable(
+                                route = "imageGeneration?letterText={letterText}",
+                                arguments = listOf(
+                                    navArgument("letterText") { defaultValue = "" }
+                                )
+                            ) { backStackEntry ->
+                                val letterText = backStackEntry.arguments?.getString("letterText") ?: ""
+                                ImageGenerationScreen(
+                                    navController = navController,
+                                    letterText = letterText
                                 )
                             }
                         }
