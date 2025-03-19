@@ -3,6 +3,8 @@
 package com.intel.papyrusbaby.screen
 
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +50,10 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.intel.papyrusbaby.R
+import com.intel.papyrusbaby.firebase.ArchiveItem
+import com.intel.papyrusbaby.firebase.ArchiveRepository
 import com.intel.papyrusbaby.flask.OpenAiServer
+import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -59,11 +66,21 @@ fun WrittenLetterScreen(
     prompt: String,
     navController: NavController
 ) {
+    // 코루틴 스코프 생성
+    val scope = rememberCoroutineScope()
+
+    // 로컬 컨텍스트
+    val context = LocalContext.current
+
+    // 로딩 상태와 결과 상태를 저장하는 변수
     var isLoading by remember { mutableStateOf(true) }
-    var openAiResponse by remember { mutableStateOf("") }
+    var isFinished by remember { mutableStateOf(false) }
 
     // 정상적으로 생성된 답변에 대해서만 처리하는 변수
     var generationSuccessful by remember { mutableStateOf(false) }
+
+    // 아카이브 성공 여부를 저장하는 변수
+    var archivingSuccessful by remember { mutableStateOf(false) }
 
     // 현재 날짜 생성 (작성일)
     val currentDate = remember {
@@ -75,6 +92,9 @@ fun WrittenLetterScreen(
     val decodedDocumentType = URLDecoder.decode(documentType, "UTF-8")
     val decodedPrompt = URLDecoder.decode(prompt, "UTF-8")
 
+    // 서버 응답을 저장하는 변수
+    var openAiResponse by remember { mutableStateOf("") }
+
     // 서버 요청: 화면이 시작될 때 실행
     LaunchedEffect(Unit) {
         OpenAiServer.sendRequestToServer(
@@ -83,6 +103,7 @@ fun WrittenLetterScreen(
             scenario = decodedPrompt
         ) { serverResponse, error ->
             isLoading = false
+            isFinished = true
             openAiResponse = serverResponse?.result ?: "응답 없음"
             generationSuccessful = serverResponse?.isSuccessful ?: false
         }
@@ -102,13 +123,13 @@ fun WrittenLetterScreen(
             color = Color(0xFF1B1818)
         )
         Text(
-            text = "작가: $decodedWriter",
+            text = "작가: ${decodedWriter.ifEmpty { "무명 작가" }}",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF1B1818)
         )
         Text(
-            text = "글 형식: $decodedDocumentType",
+            text = "글 형식: ${decodedDocumentType.ifEmpty { "단문" }}",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF1B1818)
@@ -141,15 +162,39 @@ fun WrittenLetterScreen(
                 if (generationSuccessful) {
                     Icon(
                         painter = painterResource(
-                            R.drawable.icon_archive_outline
+                            if (archivingSuccessful) R.drawable.icon_archive_filled else R.drawable.icon_archive_outline
                         ),
                         tint = Color.Unspecified,
                         contentDescription = "ArchivedLetters",
                         modifier = Modifier
                             .align(alignment = Alignment.End)
                             .height(20.dp)
-                            .clickable {
-                                // TODO: 아카이브 기능 추가
+                            .clickable(enabled = !archivingSuccessful) {
+                                // 아카이브 저장
+                                val archiveItem = ArchiveItem(
+                                    writtenDate = currentDate,
+                                    author = decodedWriter.ifEmpty { "무명 작가" },
+                                    docType = decodedDocumentType.ifEmpty { "단문" },
+                                    detail = decodedPrompt,
+                                    generatedText = openAiResponse
+                                )
+
+                                // 코루틴 처리
+                                scope.launch {
+                                    try {
+                                        ArchiveRepository.addArchiveItem(archiveItem)
+                                        // 저장 성공 시 처리
+                                        archivingSuccessful = true
+                                        // 토스트 메세지 출력
+                                        Toast
+                                            .makeText(context, "보관함에 저장 되었습니다!", Toast.LENGTH_SHORT)
+                                            .show()
+
+                                    } catch (e: Exception) {
+                                        // 실패 처리
+                                        Log.e("Archive", "DB Save Error: ${e.localizedMessage}", e)
+                                    }
+                                }
                             }
                     )
                 }
@@ -159,13 +204,21 @@ fun WrittenLetterScreen(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF221F10),
+                    modifier = Modifier
+                        .fillMaxHeight(0.5f)
+                        .verticalScroll(rememberScrollState())
                 )
             }
         }
         val clipboardManager = LocalClipboardManager.current
         val context = LocalContext.current
-            if (generationSuccessful) {
-                Row(){
+        if (isFinished) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                if (generationSuccessful) {
                     Text(
                         text = "보내기",
                         color = Color(0xFF5C5945),
@@ -203,8 +256,9 @@ fun WrittenLetterScreen(
                             .clickable {
                                 clipboardManager.setText(AnnotatedString(openAiResponse))
                             }
-                            .padding(horizontal = 10.dp, vertical = 5.dp))
-
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
 
                 Text(
                     text = "다시 작성하기",
@@ -223,9 +277,12 @@ fun WrittenLetterScreen(
                         .padding(horizontal = 10.dp, vertical = 5.dp))
             }
 
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            FontSelectionScreen(openAiResponse)
-        }}
+            if (generationSuccessful) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    FontSelectionScreen(openAiResponse)
+                }
+            }
+        }
     }
 }
 
@@ -254,29 +311,37 @@ fun FontSelectionScreen(openAiResponse: String) {
     // 선택된 폰트를 상태로 관리 (초기값은 기본 폰트)
     var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
 
         // 폰트 선택 버튼 Row
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            // Default
             Button(onClick = { selectedFontFamily = defaultFont }) {
-                Text("Default")
+                Text("Def")
             }
+            //Bold & Clear
             Button(onClick = { selectedFontFamily = boldAndClearFont }) {
-                Text("Bold & Clear")
+                Text("Bold")
             }
+            // Cute
             Button(onClick = { selectedFontFamily = cuteFont }) {
                 Text("Cute")
             }
+            // Handwriting
             Button(onClick = { selectedFontFamily = handwritingFont }) {
-                Text("Handwriting")
+                Text("Hand")
             }
+            // Handwriting Thin
             Button(onClick = { selectedFontFamily = handwritingThinFont }) {
-                Text("Handwriting Thin")
+                Text("HandT")
             }
         }
 

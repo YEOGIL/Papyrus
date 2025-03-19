@@ -5,6 +5,7 @@ package com.intel.papyrusbaby.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,7 +70,9 @@ fun WriteLetterScreen(navController: NavController) {
         .fillMaxSize()
         .background(Color(0xFFFFFAE6))
         .pointerInput(Unit) {
-            focusManager.clearFocus()
+            detectTapGestures(onTap = {
+                focusManager.clearFocus()
+            })
         }) {
         Spacer(modifier = Modifier.height(20.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
