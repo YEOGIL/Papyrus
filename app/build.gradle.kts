@@ -101,4 +101,7 @@ dependencies {
 
     // Material Icons
     implementation ("androidx.compose.material:material-icons-extended:1.7.6")
+
+    // AndroidSVG
+    implementation("com.caverock:androidsvg-aar:1.4")
 }
