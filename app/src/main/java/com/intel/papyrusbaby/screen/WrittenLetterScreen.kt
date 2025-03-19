@@ -3,6 +3,8 @@
 package com.intel.papyrusbaby.screen
 
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +50,10 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.intel.papyrusbaby.R
+import com.intel.papyrusbaby.firebase.ArchiveItem
+import com.intel.papyrusbaby.firebase.ArchiveRepository
 import com.intel.papyrusbaby.flask.OpenAiServer
+import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,12 +66,21 @@ fun WrittenLetterScreen(
     prompt: String,
     navController: NavController
 ) {
+    // 코루틴 스코프 생성
+    val scope = rememberCoroutineScope()
+
+    // 로컬 컨텍스트
+    val context = LocalContext.current
+
+    // 로딩 상태와 결과 상태를 저장하는 변수
     var isLoading by remember { mutableStateOf(true) }
     var isFinished by remember { mutableStateOf(false) }
-    var openAiResponse by remember { mutableStateOf("") }
 
     // 정상적으로 생성된 답변에 대해서만 처리하는 변수
     var generationSuccessful by remember { mutableStateOf(false) }
+
+    // 아카이브 성공 여부를 저장하는 변수
+    var archivingSuccessful by remember { mutableStateOf(false) }
 
     // 현재 날짜 생성 (작성일)
     val currentDate = remember {
@@ -76,6 +91,9 @@ fun WrittenLetterScreen(
     val decodedWriter = URLDecoder.decode(writer, "UTF-8")
     val decodedDocumentType = URLDecoder.decode(documentType, "UTF-8")
     val decodedPrompt = URLDecoder.decode(prompt, "UTF-8")
+
+    // 서버 응답을 저장하는 변수
+    var openAiResponse by remember { mutableStateOf("") }
 
     // 서버 요청: 화면이 시작될 때 실행
     LaunchedEffect(Unit) {
@@ -144,15 +162,39 @@ fun WrittenLetterScreen(
                 if (generationSuccessful) {
                     Icon(
                         painter = painterResource(
-                            R.drawable.icon_archive_outline
+                            if (archivingSuccessful) R.drawable.icon_archive_filled else R.drawable.icon_archive_outline
                         ),
                         tint = Color.Unspecified,
                         contentDescription = "ArchivedLetters",
                         modifier = Modifier
                             .align(alignment = Alignment.End)
                             .height(20.dp)
-                            .clickable {
-                                // TODO: 아카이브 기능 추가
+                            .clickable(enabled = !archivingSuccessful) {
+                                // 아카이브 저장
+                                val archiveItem = ArchiveItem(
+                                    writtenDate = currentDate,
+                                    author = decodedWriter.ifEmpty { "무명 작가" },
+                                    docType = decodedDocumentType.ifEmpty { "단문" },
+                                    detail = decodedPrompt,
+                                    generatedText = openAiResponse
+                                )
+
+                                // 코루틴 처리
+                                scope.launch {
+                                    try {
+                                        ArchiveRepository.addArchiveItem(archiveItem)
+                                        // 저장 성공 시 처리
+                                        archivingSuccessful = true
+                                        // 토스트 메세지 출력
+                                        Toast
+                                            .makeText(context, "보관함에 저장 되었습니다!", Toast.LENGTH_SHORT)
+                                            .show()
+
+                                    } catch (e: Exception) {
+                                        // 실패 처리
+                                        Log.e("Archive", "DB Save Error: ${e.localizedMessage}", e)
+                                    }
+                                }
                             }
                     )
                 }

@@ -10,11 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.intel.papyrusbaby.firebase.AuthScreenEmailPassword
-import com.intel.papyrusbaby.screen.ArchivedLetterScreen
+import com.intel.papyrusbaby.screen.ArchivedListContentsScreen
+import com.intel.papyrusbaby.screen.ArchivedListScreen
 import com.intel.papyrusbaby.screen.HomeScreen
 import com.intel.papyrusbaby.screen.WriteLetterScreen
 import com.intel.papyrusbaby.screen.WrittenLetterScreen
@@ -74,7 +76,6 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("home") { HomeScreen(navController) }
                             composable("write") { WriteLetterScreen(navController) }
-                            composable("archive") { ArchivedLetterScreen(navController) }
                             composable(
                                 route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}",
                                 arguments = listOf(
@@ -96,6 +97,18 @@ class MainActivity : ComponentActivity() {
                                     navController = navController
                                 )
                             }
+                            composable("archive") { ArchivedListScreen(navController) }
+                            // 네비게이션: MainActivity.kt에 route 추가
+                            composable(
+                                route = "archiveDetail/{docId}",
+                                arguments = listOf(
+                                    navArgument("docId") { defaultValue = "" }
+                                )
+                            ) { backStackEntry ->
+                                val docId = backStackEntry.arguments?.getString("docId") ?: ""
+                                ArchivedListContentsScreen(docId = docId, navController = navController)
+                            }
+
                         }
                     },
                     navController = navController
