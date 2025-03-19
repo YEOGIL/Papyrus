@@ -45,7 +45,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppBar(
     currentUser: FirebaseUser?,
-    onWithdraw: () -> Unit,
+    onDeleteAccount: () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
     navController: NavController
 ) {
@@ -74,111 +74,40 @@ fun AppBar(
                 coroutineScope = coroutineScope,
                 drawerState = drawerState,
                 currentUser = currentUser,
-                onWithdraw = onWithdraw
+                onDeleteAccount = onDeleteAccount
             )
         },
         content = {
             Scaffold(
                 topBar = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFfffae6))
-                            .statusBarsPadding()
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_draweropen),
-                            contentDescription = "drawerOpen",
-                            tint = Color.Unspecified,
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .padding(top = 15.dp, start = 15.dp)
-                                .clickable {
-                                    coroutineScope.launch {
-                                        drawerState.open()
-                                    }
-                                }
-                        )
-
-                        // Title
-                        Icon(
-                            painter = painterResource(R.drawable.papyruslogo),
-                            contentDescription = "Menu",
-                            tint = Color.Unspecified,
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(top = 20.dp)
-                        )
-                    }
+                    PapyrusTopBar(
+                        onDrawerOpen = { coroutineScope.launch { drawerState.open() } }
+                    )
                 },
                 bottomBar = {
-                    // bottom bar
-                    val currentRouteInner = currentRoute
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFfffae6))
-                            .padding(horizontal = 25.dp, vertical = 10.dp)
-                            .navigationBarsPadding()
-                    ) {
-                        // Home icon
-                        Icon(
-                            painter = painterResource(
-                                id = if (currentRouteInner == "home")
-                                    R.drawable.icon_home_filled
-                                else
-                                    R.drawable.icon_home_outline
-                            ),
-                            tint = Color.Unspecified,
-                            contentDescription = "Home",
-                            modifier = Modifier.clickable {
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
-                                    launchSingleTop = true
-                                }
+                    PapyrusBottomBar(
+                        currentRoute = currentRoute,
+                        onHomeClick = {
+                            navController.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                                launchSingleTop = true
                             }
-                        )
-                        // Write icon
-                        Icon(
-                            painter = painterResource(
-                                id = if (currentRouteInner == "write")
-                                    R.drawable.icon_add_filled
-                                else
-                                    R.drawable.icon_add_outline
-                            ),
-                            tint = Color.Unspecified,
-                            contentDescription = "CreateLetter",
-                            modifier = Modifier.clickable {
-                                navController.navigate("write") {
-                                    popUpTo("write") { inclusive = true }
-                                    launchSingleTop = true
-                                }
+                        },
+                        onWriteClick = {
+                            navController.navigate("write") {
+                                popUpTo("write") { inclusive = true }
+                                launchSingleTop = true
                             }
-                        )
-                        // Archive icon
-                        Icon(
-                            painter = painterResource(
-                                id = if (currentRouteInner == "archive")
-                                    R.drawable.icon_archive_filled
-                                else
-                                    R.drawable.icon_archive_outline
-                            ),
-                            tint = Color.Unspecified,
-                            contentDescription = "ArchivedLetters",
-                            modifier = Modifier.clickable {
-                                navController.navigate("archive") {
-                                    popUpTo("archive") { inclusive = true }
-                                    launchSingleTop = true
-                                }
+                        },
+                        onArchiveClick = {
+                            navController.navigate("archive") {
+                                popUpTo("archive") { inclusive = true }
+                                launchSingleTop = true
                             }
-                        )
-                    }
+                        }
+                    )
                 }
-            ) { paddingValues ->
-                content(paddingValues)
-            }
+            ) { paddingValues -> content(paddingValues) }
         }
     )
 }
@@ -190,7 +119,7 @@ fun DrawerContent(
     coroutineScope: kotlinx.coroutines.CoroutineScope,
     drawerState: DrawerState,
     currentUser: FirebaseUser?,
-    onWithdraw: () -> Unit
+    onDeleteAccount: () -> Unit
 ) {
     var showLogOutDialog by remember { mutableStateOf(false) }
 
@@ -325,10 +254,94 @@ fun DrawerContent(
 //                .clickable {
 //                    // 회원 탈퇴 로직
 //                    // user.delete() -> signOut 순서
-//                    onWithdraw()
+//                    onDeleteAccount()
 //                    coroutineScope.launch { drawerState.close() }
 //                }
 //        )
         }
+    }
+}
+
+@Composable
+fun PapyrusTopBar(
+    onDrawerOpen: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFfffae6))
+            .statusBarsPadding()
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.icon_draweropen),
+            contentDescription = "drawerOpen",
+            tint = Color.Unspecified,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(top = 15.dp, start = 15.dp)
+                .clickable { onDrawerOpen() }
+        )
+
+        // Title
+        Icon(
+            painter = painterResource(R.drawable.papyruslogo),
+            contentDescription = "Menu",
+            tint = Color.Unspecified,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(top = 20.dp)
+        )
+    }
+}
+
+@Composable
+fun PapyrusBottomBar(
+    currentRoute: String?,
+    onHomeClick: () -> Unit,
+    onWriteClick: () -> Unit,
+    onArchiveClick: () -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFfffae6))
+            .padding(horizontal = 25.dp, vertical = 10.dp)
+            .navigationBarsPadding()
+    ) {
+        Icon(
+            painter = painterResource(
+                id = if (currentRoute == "home")
+                    R.drawable.icon_home_filled
+                else
+                    R.drawable.icon_home_outline
+            ),
+            tint = Color.Unspecified,
+            contentDescription = "Home",
+            modifier = Modifier.clickable { onHomeClick() }
+        )
+        Icon(
+            painter = painterResource(
+                id = if (currentRoute == "write")
+                    R.drawable.icon_add_filled
+                else
+                    R.drawable.icon_add_outline
+            ),
+            tint = Color.Unspecified,
+            contentDescription = "CreateLetter",
+            modifier = Modifier.clickable { onWriteClick() }
+        )
+        Icon(
+            painter = painterResource(
+                id = if (currentRoute == "archive")
+                    R.drawable.icon_archive_filled
+                else
+                    R.drawable.icon_archive_outline
+            ),
+            tint = Color.Unspecified,
+            contentDescription = "ArchivedLetters",
+            modifier = Modifier.clickable { onArchiveClick() }
+        )
     }
 }

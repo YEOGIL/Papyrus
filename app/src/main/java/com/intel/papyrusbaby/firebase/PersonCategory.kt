@@ -2,7 +2,6 @@ package com.intel.papyrusbaby.firebase
 
 import android.annotation.SuppressLint
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Source
 import kotlinx.coroutines.tasks.await
 
 // JSON 구조에 맞춘 Author 데이터 클래스
