@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -51,6 +53,14 @@ import com.intel.papyrusbaby.R
 import java.io.File
 import java.io.FileOutputStream
 
+/**
+ * 개선된 ImageGenerationScreen:
+ * - FileProvider 설정 확인 필요 (AndroidManifest.xml과 res/xml/file_paths.xml)
+ * - 미리보기 영역 크기가 유효한 경우에만 공유/저장 처리
+ * - drawLetterOnCanvas() 함수를 재사용하여 코드 중복 제거
+ * - 고정 높이와 padding 등을 사용해 레이아웃 안정성을 향상
+ * - 예외 처리를 추가해 에러 발생 시 사용자에게 알림
+ */
 @Composable
 fun ImageGenerationScreen(
     navController: NavController,
@@ -67,7 +77,7 @@ fun ImageGenerationScreen(
     val cuteFont = FontFamily(Font(R.font.cute))
     val handwritingFont = FontFamily(Font(R.font.handwriting))
     val handwritingThinFont = FontFamily(Font(R.font.handwritingthin))
-    var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
+    var selectedFontFamily by remember { mutableStateOf<FontFamily>(defaultFont) }
 
     // (3) 미리보기 영역 크기 측정
     var previewWidth by remember { mutableIntStateOf(0) }
@@ -79,10 +89,13 @@ fun ImageGenerationScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // 상단: '뒤로가기' 등
+        // 상단 영역: 뒤로가기 버튼과 화면 제목 (고정 높이)
         Row(
-            modifier = Modifier.fillMaxSize(fraction = 0.1f),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
             Text(
                 text = "뒤로가기",
@@ -90,11 +103,8 @@ fun ImageGenerationScreen(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
-                    .border(
-                        1.dp, shape = RoundedCornerShape(5.dp), color = Color(0xFF94907F)
-                    )
+                    .border(1.dp, shape = RoundedCornerShape(5.dp), color = Color(0xFF94907F))
                     .clickable {
-                        // 네비게이션 뒤로가기
                         navController.popBackStack()
                     }
                     .padding(horizontal = 10.dp, vertical = 5.dp)
@@ -107,7 +117,9 @@ fun ImageGenerationScreen(
             )
         }
 
-        // 배경 선택
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 배경 선택 영역
         Text("편지지 선택", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         Row(
             modifier = Modifier.padding(vertical = 8.dp),
@@ -139,33 +151,25 @@ fun ImageGenerationScreen(
             )
         }
 
-        // 폰트 선택
+        // 폰트 선택 영역
         Text("폰트 선택", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = { selectedFontFamily = defaultFont }) {
-                Text("Def")
-            }
-            Button(onClick = { selectedFontFamily = boldAndClearFont }) {
-                Text("Bold")
-            }
-            Button(onClick = { selectedFontFamily = cuteFont }) {
-                Text("Cute")
-            }
-            Button(onClick = { selectedFontFamily = handwritingFont }) {
-                Text("Hand")
-            }
-            Button(onClick = { selectedFontFamily = handwritingThinFont }) {
-                Text("Thin")
-            }
+            Button(onClick = { selectedFontFamily = defaultFont }) { Text("Def") }
+            Button(onClick = { selectedFontFamily = boldAndClearFont }) { Text("Bold") }
+            Button(onClick = { selectedFontFamily = cuteFont }) { Text("Cute") }
+            Button(onClick = { selectedFontFamily = handwritingFont }) { Text("Hand") }
+            Button(onClick = { selectedFontFamily = handwritingThinFont }) { Text("Thin") }
         }
 
-        // 미리보기 영역
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 미리보기 영역 (남은 공간 확장)
         Box(
             modifier = Modifier
-                .weight(1f) // 남은 공간 확장
+                .weight(1f)
                 .clip(RoundedCornerShape(16.dp))
                 .onGloballyPositioned { coordinates ->
                     previewWidth = coordinates.size.width
@@ -189,96 +193,67 @@ fun ImageGenerationScreen(
             )
         }
 
-        // 공유 / 저장 버튼
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 하단 버튼 영역: 공유하기와 저장하기 (고정 높이)
         Row(
             modifier = Modifier
-                .fillMaxSize(fraction = 0.2f),
+                .fillMaxWidth()
+                .height(56.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
                 onClick = {
-                    if (previewWidth > 0 && previewHeight > 0) {
-                        val bitmap =
-                            generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
-                                // 1. 배경 이미지 그리기
-                                val bgBitmap = BitmapFactory.decodeResource(
-                                    context.resources, selectedBackgroundRes
-                                )
-                                val destRect = Rect(0, 0, previewWidth, previewHeight)
-                                canvas.drawBitmap(bgBitmap, null, destRect, null)
-
-                                // 2. 텍스트 그리기 (중앙 정렬)
-                                val paint = android.graphics.Paint().apply {
-                                    color = android.graphics.Color.BLACK
-                                    // 20.sp를 픽셀 단위로 변환 (대략적으로 density 곱)
-                                    val density = context.resources.displayMetrics.density
-                                    textSize = 20 * density
-                                    textAlign = android.graphics.Paint.Align.CENTER
-                                }
-                                // 텍스트의 수직 중앙 위치 계산
-                                val fm = paint.fontMetrics
-                                val textHeight = fm.descent - fm.ascent
-                                val x = previewWidth / 2f
-                                val y = previewHeight / 2f + (textHeight / 2f - fm.descent)
-                                canvas.drawText(letterText, x, y, paint)
-                            }
+                    if (previewWidth <= 0 || previewHeight <= 0) {
+                        Toast.makeText(context, "미리보기 영역이 준비되지 않았습니다.", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    try {
+                        val bitmap = generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
+                            drawLetterOnCanvas(context, canvas, selectedBackgroundRes, letterText)
+                        }
                         // 공유용: 임시 캐시 파일에 저장 후 FileProvider를 통한 Uri 생성
                         val imageUri = saveBitmapToCache(context, bitmap)
-                        imageUri?.let { uri ->
+                        if (imageUri != null) {
                             val shareIntent = Intent().apply {
                                 action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_STREAM, uri)
+                                putExtra(Intent.EXTRA_STREAM, imageUri)
                                 type = "image/jpeg"
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            context.startActivity(
-                                Intent.createChooser(
-                                    shareIntent, "이미지 공유"
-                                )
-                            )
+                            context.startActivity(Intent.createChooser(shareIntent, "이미지 공유"))
+                        } else {
+                            Toast.makeText(context, "이미지 공유 실패", Toast.LENGTH_SHORT).show()
                         }
-                    }
-                }) {
-                Text("공유하기")
-            }
-            Button(onClick = {
-                if (previewWidth > 0 && previewHeight > 0) {
-                    val bitmap =
-                        generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
-                            // 1. 배경 이미지 그리기
-                            val bgBitmap = BitmapFactory.decodeResource(
-                                context.resources,
-                                selectedBackgroundRes
-                            )
-                            val destRect = Rect(0, 0, previewWidth, previewHeight)
-                            canvas.drawBitmap(bgBitmap, null, destRect, null)
-
-                            // 2. 텍스트 그리기 (중앙 정렬)
-                            val paint = android.graphics.Paint().apply {
-                                color = android.graphics.Color.BLACK
-                                // 20.sp를 픽셀 단위로 변환 (대략적으로 density 곱)
-                                val density = context.resources.displayMetrics.density
-                                textSize = 20 * density
-                                textAlign = android.graphics.Paint.Align.CENTER
-                            }
-                            // 텍스트의 수직 중앙 위치 계산
-                            val fm = paint.fontMetrics
-                            val textHeight = fm.descent - fm.ascent
-                            val x = previewWidth / 2f
-                            val y = previewHeight / 2f + (textHeight / 2f - fm.descent)
-                            canvas.drawText(letterText, x, y, paint)
-                        }
-                    val savedUri = saveBitmapToGallery(context, bitmap)
-                    if (savedUri != null) {
-                        // 저장 성공
-                        // Toast 등으로 알림 (여기서는 간단하게 로그 출력)
-                        Toast.makeText(context, "저장되었습니다.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        // 저장 실패 알림
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "공유 중 에러 발생: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }) {
+            ) {
+                Text("공유하기")
+            }
+            Button(
+                onClick = {
+                    if (previewWidth <= 0 || previewHeight <= 0) {
+                        Toast.makeText(context, "미리보기 영역이 준비되지 않았습니다.", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    try {
+                        val bitmap = generatePreviewBitmap(previewWidth, previewHeight) { canvas ->
+                            drawLetterOnCanvas(context, canvas, selectedBackgroundRes, letterText)
+                        }
+                        val savedUri = saveBitmapToGallery(context, bitmap)
+                        if (savedUri != null) {
+                            Toast.makeText(context, "저장되었습니다.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "저장 중 에러 발생: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            ) {
                 Text("저장하기")
             }
         }
@@ -286,7 +261,8 @@ fun ImageGenerationScreen(
 }
 
 /**
- * 실제 캔버스에 배경 이미지와 텍스트를 그리는 함수
+ * 캔버스에 배경 이미지와 텍스트를 그리는 함수.
+ * 공유 및 저장 버튼에서 재사용합니다.
  */
 fun drawLetterOnCanvas(
     context: Context,
@@ -309,7 +285,6 @@ fun drawLetterOnCanvas(
         textSize = 20 * density
         textAlign = android.graphics.Paint.Align.CENTER
     }
-    // 텍스트의 수직 중앙 위치 계산
     val fm = paint.fontMetrics
     val textHeight = fm.descent - fm.ascent
     val x = previewWidth / 2f
@@ -318,7 +293,7 @@ fun drawLetterOnCanvas(
 }
 
 /**
- * 미리보기 영역을 Bitmap으로 캡처 (임시)
+ * 미리보기 영역을 Bitmap으로 캡처하는 함수.
  */
 fun generatePreviewBitmap(
     previewWidth: Int,
@@ -332,7 +307,7 @@ fun generatePreviewBitmap(
 }
 
 /**
- * 디바이스의 갤러리에 Bitmap을 저장 (MediaStore)
+ * 디바이스 갤러리에 Bitmap을 저장하는 함수 (MediaStore 사용).
  */
 fun saveBitmapToGallery(
     context: Context,
@@ -357,7 +332,8 @@ fun saveBitmapToGallery(
 }
 
 /**
- * 임시 캐시 디렉토리에 Bitmap을 저장 후 FileProvider로 Uri 생성 (공유용)
+ * 임시 캐시 디렉토리에 Bitmap을 저장하고 FileProvider를 통해 Uri를 생성하는 함수 (공유용).
+ * AndroidManifest.xml과 res/xml/file_paths.xml에 적절한 설정이 필요합니다.
  */
 fun saveBitmapToCache(
     context: Context,
@@ -376,7 +352,9 @@ fun saveBitmapToCache(
 @Preview(showBackground = true)
 @Composable
 fun ImageGenerationScreenPreview() {
-    val navController = NavController(LocalContext.current)
+    // Preview에서는 빈 NavController 사용
+    val context = LocalContext.current
+    val navController = NavController(context)
     ImageGenerationScreen(
         navController = navController,
         letterText = "안녕하세요! 이것은 미리보기입니다."
