@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,8 +37,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -225,7 +222,6 @@ fun WrittenLetterScreen(
             }
         }
         val clipboardManager = LocalClipboardManager.current
-//        val context = LocalContext.current
         if (isFinished) {
             Spacer(modifier = Modifier.height(20.dp))
             Row(
@@ -290,12 +286,6 @@ fun WrittenLetterScreen(
                         }
                         .padding(horizontal = 10.dp, vertical = 5.dp))
             }
-
-//            if (generationSuccessful) {
-//                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-//                    FontSelectionScreen(openAiResponse)
-//                }
-//            }
         }
     }
 }
@@ -312,61 +302,3 @@ fun LoadingAnimation() {
         progress = progress
     )
 }
-
-//@Composable
-//fun FontSelectionScreen(openAiResponse: String) {
-//    // 기본 폰트와 커스텀 폰트 정의
-//    val defaultFont = FontFamily.Default
-//    val boldAndClearFont = FontFamily(Font(R.font.boldandclear))
-//    val cuteFont = FontFamily(Font(R.font.cute))
-//    val handwritingFont = FontFamily(Font(R.font.handwriting))
-//    val handwritingThinFont = FontFamily(Font(R.font.handwritingthin))
-//
-//    // 선택된 폰트를 상태로 관리 (초기값은 기본 폰트)
-//    var selectedFontFamily by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
-//
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp)
-//    ) {
-//
-//        // 폰트 선택 버튼 Row
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth(),
-//            horizontalArrangement = Arrangement.SpaceEvenly
-//        ) {
-//            // Default
-//            Button(onClick = { selectedFontFamily = defaultFont }) {
-//                Text("Def")
-//            }
-//            //Bold & Clear
-//            Button(onClick = { selectedFontFamily = boldAndClearFont }) {
-//                Text("Bold")
-//            }
-//            // Cute
-//            Button(onClick = { selectedFontFamily = cuteFont }) {
-//                Text("Cute")
-//            }
-//            // Handwriting
-//            Button(onClick = { selectedFontFamily = handwritingFont }) {
-//                Text("Hand")
-//            }
-//            // Handwriting Thin
-//            Button(onClick = { selectedFontFamily = handwritingThinFont }) {
-//                Text("HandT")
-//            }
-//        }
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        // 선택한 폰트로 openAiResponse 출력
-//        Text(
-//            text = openAiResponse,
-//            fontSize = 16.sp,
-//            fontFamily = selectedFontFamily,
-//            color = Color(0xFF221F10)
-//        )
-//    }
-//}

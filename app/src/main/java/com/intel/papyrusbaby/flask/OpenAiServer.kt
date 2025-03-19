@@ -1,7 +1,6 @@
 package com.intel.papyrusbaby.flask
 
 
-import com.intel.papyrusbaby.screen.ThemeType
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull

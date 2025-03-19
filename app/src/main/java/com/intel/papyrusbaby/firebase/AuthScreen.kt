@@ -3,7 +3,13 @@ package com.intel.papyrusbaby.firebase
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -12,7 +18,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -27,8 +37,8 @@ import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
-// 비밀번호 규칙 예시: 대문자, 소문자, 숫자, 특수문자(!@#$%^&*) 각각 최소 1개 이상, 길이 8~16자
-private val PASSWORD_REGEX = Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,16}$")
+// 비밀번호 규칙 예시: 최소 하나의 영문자와 하나의 숫자 포함, 길이 8~16자
+private val PASSWORD_REGEX = Regex("^(?=.*[A-Za-z])(?=.*\\d).{8,16}$")
 
 fun isPasswordValid(password: String): Boolean {
     return PASSWORD_REGEX.matches(password)
@@ -106,7 +116,8 @@ fun AuthScreenEmailPassword(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val image =
+                    if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                 Icon(
                     imageVector = image,
                     contentDescription = "Toggle password visibility",
@@ -117,11 +128,16 @@ fun AuthScreenEmailPassword(
             }
         )
 
+        Text(
+            text = "비밀번호는 영문자와 숫자를 포함해 8~16자로 입력해주세요.",
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
         // (D) 회원가입 모드일 때만 비밀번호 규칙 안내 표시
         if (isSignUpMode && password.isNotEmpty()) {
             if (!isPasswordRuleOk) {
                 Text(
-                    text = "비밀번호는 대소문자, 숫자, 특수문자(!@#\$%^&*)를 포함해 8~16자로 입력해주세요.",
+                    text = "사용할 수 없는 비밀번호 형식입니다..",
                     modifier = Modifier.padding(top = 4.dp)
                 )
             } else {
@@ -143,7 +159,8 @@ fun AuthScreenEmailPassword(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
-                    val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    val image =
+                        if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                     Icon(
                         imageVector = image,
                         contentDescription = "Toggle confirmPassword visibility",

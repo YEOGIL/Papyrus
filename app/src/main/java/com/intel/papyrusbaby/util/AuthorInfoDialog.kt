@@ -29,7 +29,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.intel.papyrusbaby.firebase.Author
-import java.net.URLEncoder
 
 @Composable
 fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: () -> Unit) {

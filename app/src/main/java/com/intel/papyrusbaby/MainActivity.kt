@@ -88,7 +88,8 @@ class MainActivity : ComponentActivity() {
                                     navArgument("writer") { defaultValue = "" }
                                 )
                             ) { backStackEntry ->
-                                val writerParam = backStackEntry.arguments?.getString("writer") ?: ""
+                                val writerParam =
+                                    backStackEntry.arguments?.getString("writer") ?: ""
                                 WriteLetterScreen(navController, writerParam)
                             }
                             composable(
@@ -96,7 +97,8 @@ class MainActivity : ComponentActivity() {
                                 arguments = writtenLetterArgs
                             ) { backStackEntry ->
                                 val writer = backStackEntry.arguments?.getString("writer") ?: ""
-                                val documentType = backStackEntry.arguments?.getString("documentType") ?: ""
+                                val documentType =
+                                    backStackEntry.arguments?.getString("documentType") ?: ""
                                 val prompt = backStackEntry.arguments?.getString("prompt") ?: ""
                                 val theme = backStackEntry.arguments?.getString("theme") ?: ""
 
@@ -116,7 +118,10 @@ class MainActivity : ComponentActivity() {
                                 )
                             ) { backStackEntry ->
                                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
-                                ArchivedListContentsScreen(docId = docId, navController = navController)
+                                ArchivedListContentsScreen(
+                                    docId = docId,
+                                    navController = navController
+                                )
                             }
                         }
                     },

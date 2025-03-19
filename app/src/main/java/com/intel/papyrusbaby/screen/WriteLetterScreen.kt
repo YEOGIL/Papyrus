@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -49,7 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.intel.papyrusbaby.R
@@ -183,7 +182,7 @@ fun WriteLetterScreen(
             )
         }
 
-        Spacer(modifier = Modifier.size(10.dp))
+        Spacer(modifier = Modifier.width(10.dp))
 
         // 둘째 줄: 테마 아이콘 + 테마 목록
         Row(
@@ -288,13 +287,6 @@ fun WriteLetterScreen(
     }
 }
 
-// 사용자 선택 정보를 담을 data class
-data class UserSelect(
-    val writer: String,
-    val documentType: String,
-    val prompt: String
-)
-
 // 간단한 커스텀 입력 필드
 @Composable
 fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modifier: Modifier) {
@@ -365,63 +357,44 @@ fun ExpandableFilter(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(Color.Transparent)
-//                .padding(horizontal = 40.dp)
-//                .fillMaxWidth()
-//                .clip(
-//                    RoundedCornerShape(
-//                        topStart = 0.dp, topEnd = 0.dp, bottomEnd = 10.dp, bottomStart = 10.dp
-//                    )
-//                )
-//                .border(
-//                    width = 0.5.dp,
-//                    color = Color(0xFF777777),
-//                    shape = RoundedCornerShape(bottomEnd = 10.dp, bottomStart = 10.dp)
-//                )
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .background(Color(0xFFF0F0F0))
+                .border(
+                    width = 0.5.dp,
+                    color = Color(0xFF777777),
+                    shape = RoundedCornerShape(4.5.dp)
+                )
         ) {
-
-            Box(
+            // 최대 높이: 화면 높이의 50%
+            val configuration = LocalConfiguration.current
+            val maxDropdownHeight = configuration.screenHeightDp.dp * 0.5f
+            Column(
                 modifier = Modifier
-                    .background(Color(0xFFF0F0F0))
-                    .border(
-                        width = 0.5.dp,
-                        color = Color(0xFF777777),
-                        shape = RoundedCornerShape(10.dp)
-                    )
+                    .fillMaxWidth()
+                    .heightIn(max = maxDropdownHeight)
+                    .verticalScroll(rememberScrollState())
             ) {
-                // 최대 높이: 화면 높이의 50%
-                val configuration = LocalConfiguration.current
-                val maxDropdownHeight = configuration.screenHeightDp.dp * 0.5f
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = maxDropdownHeight)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    options.forEach { option ->
-                        DropdownMenuItem(
-                            onClick = {
-                                val currentlySelected = selectedOptions.contains(option)
-                                onOptionSelected(option, !currentlySelected)
-                                expanded = false
-                            },
-                            text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Checkbox(
-                                        checked = selectedOptions.contains(option),
-                                        onCheckedChange = { checked ->
-                                            onOptionSelected(option, checked)
-                                            expanded = false
-                                        }
-                                    )
-                                    Text(
-                                        text = option,
-                                        modifier = Modifier.padding(start = 5.dp)
-                                    )
-                                }
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        onClick = {
+                            val currentlySelected = selectedOptions.contains(option)
+                            onOptionSelected(option, !currentlySelected)
+                            expanded = false
+                        },
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = selectedOptions.contains(option),
+                                    onCheckedChange = { checked ->
+                                        onOptionSelected(option, checked)
+                                        expanded = false
+                                    }
+                                )
+                                Text(text = option)
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
         }
