@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -47,13 +49,31 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.intel.papyrusbaby.R
+import com.intel.papyrusbaby.util.ThemeSelectionDialog
 import java.net.URLEncoder
+
+enum class ThemeType(val displayName: String) {
+    Theme01("결혼"),
+    Theme02("출산"),
+    Theme03("입학"),
+    Theme04("합격"),
+    Theme05("실패"),
+    Theme06("졸업"),
+    Theme07("군입대"),
+    Theme08("환갑"),
+    Theme09("상견례"),
+    Theme10("크리스마스"),
+    Theme11("삼일절"),
+    Theme12("광복절"),
+    Theme13("개천절"),
+    Theme14("부활절"),
+    Theme15("개업")
+}
 
 @Composable
 fun WriteLetterScreen(navController: NavController) {
     // 키보드 닫기 위한 focusManager
     val focusManager = LocalFocusManager.current
-
 
     // 현재 입력 텍스트 상태 관리
     var currentInput by remember { mutableStateOf("") }
@@ -65,6 +85,24 @@ fun WriteLetterScreen(navController: NavController) {
     // 서버 응답을 표시하기 위한 상태 변수
     var isLoading by remember { mutableStateOf(false) }
     var openAiResponse by remember { mutableStateOf("") }
+
+    // 테마 필터를 위한 상태 변수
+    val allThemes = ThemeType.entries.toList()
+    var selectedThemes by remember { mutableStateOf(listOf<ThemeType>()) }
+
+    // 테마 선택 팝업 표시 여부
+    var showThemeSelectionDialog by remember { mutableStateOf(false) }
+    if (showThemeSelectionDialog) {
+        ThemeSelectionDialog(
+            allThemes = allThemes,
+            initiallySelected = selectedThemes,
+            onDismiss = { showThemeSelectionDialog = false },
+            onConfirm = { newSelection ->
+                selectedThemes = newSelection
+                showThemeSelectionDialog = false
+            }
+        )
+    }
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -111,51 +149,47 @@ fun WriteLetterScreen(navController: NavController) {
                 modifier = Modifier.weight(1f)
             )
         }
+
         Spacer(modifier = Modifier.size(10.dp))
-        val docType = listOf(
-            "결혼",
-            "출산",
-            "입학",
-            "합격",
-            "실패",
-            "졸업",
-            "군입대",
-            "환갑",
-            "상견례",
-            "크리스마스",
-            "삼일절",
-            "광복절",
-            "개천절",
-            "부활절",
-            "개업"
-        )
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-            Spacer(modifier = Modifier.size(10.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
                 painter = painterResource(id = R.drawable.icon_filter),
                 contentDescription = "themeFilter",
                 tint = Color.Unspecified,
-                modifier = Modifier.clickable {})
-            Spacer(modifier = Modifier.size(10.dp))
-            docType.forEach { writer ->
-                Text(
-                    text = writer,
-                    color = Color(0xFF5C5945),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .border(
-                            1.dp,
-                            shape = RoundedCornerShape(5.dp),
-                            color = Color(0xFF94907F)
+                modifier = Modifier.clickable { showThemeSelectionDialog = true }
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                selectedThemes.forEach { theme ->
+                    Box(
+                        modifier = Modifier
+                            .border(
+                                1.dp,
+                                shape = RoundedCornerShape(5.dp),
+                                color = Color(0xFF94907F)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = theme.displayName,
+                            color = Color(0xFF5C5945),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
-                        .clickable {}
-                        .padding(horizontal = 10.dp, vertical = 5.dp))
-                Spacer(modifier = Modifier.size(10.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
             }
-            Spacer(modifier = Modifier.size(10.dp))
         }
-        Spacer(modifier = Modifier.size(20.dp))
 
         // 프롬프트 입력 영역
         Row(

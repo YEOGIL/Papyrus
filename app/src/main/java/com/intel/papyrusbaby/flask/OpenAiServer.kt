@@ -1,6 +1,7 @@
 package com.intel.papyrusbaby.flask
 
 
+import com.intel.papyrusbaby.screen.ThemeType
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -23,6 +24,7 @@ object OpenAiServer {
     fun sendRequestToServer(
         author: String,
         documentType: String,
+        themeType: List<String>,
         scenario: String,
         callback: (ServerResponse?, String?) -> Unit
     ) {
@@ -33,6 +35,7 @@ object OpenAiServer {
         val json = JSONObject().apply {
             put("author", author)
             put("documentType", documentType)
+            put("themeType", themeType)
             put("scenario", scenario)
         }
 

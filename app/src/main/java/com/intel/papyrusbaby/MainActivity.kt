@@ -55,6 +55,14 @@ class MainActivity : ComponentActivity() {
 //                    }
                 }
 
+                // writtenLetter 화면에 필요한 네비게이션 인자들을 미리 정의
+                val writtenLetterArgs = listOf(
+                    navArgument("writer") { defaultValue = "" },
+                    navArgument("documentType") { defaultValue = "" },
+                    navArgument("prompt") { defaultValue = "" },
+                    navArgument("theme") { defaultValue = "" }
+                )
+
                 AppBar(
                     // currentUser를 state에서 읽어옴
                     currentUser = currentFirebaseUser.value,
@@ -68,7 +76,6 @@ class MainActivity : ComponentActivity() {
                             composable("auth") {
                                 AuthScreenEmailPassword(navController) {
                                     // 로그인/회원가입 성공 시 호출
-                                    // 여기서 currentUser.value가 갱신되면 곧바로 Drawer 문구도 바뀜
                                     navController.navigate("home") {
                                         popUpTo("auth") { inclusive = true }
                                     }
@@ -77,28 +84,23 @@ class MainActivity : ComponentActivity() {
                             composable("home") { HomeScreen(navController) }
                             composable("write") { WriteLetterScreen(navController) }
                             composable(
-                                route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}",
-                                arguments = listOf(
-                                    androidx.navigation.navArgument("writer") { defaultValue = "" },
-                                    androidx.navigation.navArgument("documentType") {
-                                        defaultValue = ""
-                                    },
-                                    androidx.navigation.navArgument("prompt") { defaultValue = "" }
-                                )
+                                route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}&theme={theme}",
+                                arguments = writtenLetterArgs
                             ) { backStackEntry ->
                                 val writer = backStackEntry.arguments?.getString("writer") ?: ""
-                                val documentType =
-                                    backStackEntry.arguments?.getString("documentType") ?: ""
+                                val documentType = backStackEntry.arguments?.getString("documentType") ?: ""
                                 val prompt = backStackEntry.arguments?.getString("prompt") ?: ""
+                                val theme = backStackEntry.arguments?.getString("theme") ?: ""
+
                                 WrittenLetterScreen(
                                     writer = writer,
                                     documentType = documentType,
                                     prompt = prompt,
+                                    theme = theme,  // 전달받은 테마 문자열
                                     navController = navController
                                 )
                             }
                             composable("archive") { ArchivedListScreen(navController) }
-                            // 네비게이션: MainActivity.kt에 route 추가
                             composable(
                                 route = "archiveDetail/{docId}",
                                 arguments = listOf(
@@ -108,7 +110,6 @@ class MainActivity : ComponentActivity() {
                                 val docId = backStackEntry.arguments?.getString("docId") ?: ""
                                 ArchivedListContentsScreen(docId = docId, navController = navController)
                             }
-
                         }
                     },
                     navController = navController

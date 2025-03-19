@@ -45,9 +45,10 @@ fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: ()
                     Icon(
                         imageVector = Icons.Filled.Close,
                         contentDescription = "Close",
+                        tint = Color(0xFFFFFAE6),
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .background(Color(0xFF5C5945))
+                            .background(color = Color(0xFF5C5945), shape = RoundedCornerShape(8.dp))
                             .clickable { onDismiss() }
                     )
                 }
@@ -135,10 +136,15 @@ fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: ()
                         }
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Box(modifier = Modifier.background(Color(0xFF5C5945))) {
+                        Box(
+                            modifier = Modifier.background(
+                                color = Color(0xFF5C5945),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                        ) {
                             Text(
                                 text = "작성하기",
-                                color = fontColor,
+                                color = Color(0xFFFFFAE6),
                                 modifier = Modifier
                                     .padding((8.dp))
                                     .clickable {

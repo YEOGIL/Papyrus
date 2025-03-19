@@ -64,6 +64,7 @@ fun WrittenLetterScreen(
     writer: String,
     documentType: String,
     prompt: String,
+    theme: String?,
     navController: NavController
 ) {
     // 코루틴 스코프 생성
@@ -91,6 +92,10 @@ fun WrittenLetterScreen(
     val decodedWriter = URLDecoder.decode(writer, "UTF-8")
     val decodedDocumentType = URLDecoder.decode(documentType, "UTF-8")
     val decodedPrompt = URLDecoder.decode(prompt, "UTF-8")
+    val decodedThemeList = theme?.let {
+        val rawStr = URLDecoder.decode(it, "UTF-8") // "결혼,입학,합격"
+        rawStr.split(",")                          // ["결혼","입학","합격"]
+    } ?: emptyList()
 
     // 서버 응답을 저장하는 변수
     var openAiResponse by remember { mutableStateOf("") }
@@ -100,6 +105,7 @@ fun WrittenLetterScreen(
         OpenAiServer.sendRequestToServer(
             author = decodedWriter,
             documentType = decodedDocumentType,
+            themeType = decodedThemeList,
             scenario = decodedPrompt
         ) { serverResponse, error ->
             isLoading = false
