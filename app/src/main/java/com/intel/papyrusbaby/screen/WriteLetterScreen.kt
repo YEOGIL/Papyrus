@@ -97,7 +97,7 @@ fun WriteLetterScreen(navController: NavController) {
                 title = if (selectedFormats.isNotEmpty()) {
                     selectedFormats.joinToString(", ")
                 } else {
-                    "편지 종류"
+                    "글 종류"
                 },
                 options = listOf("일기", "편지", "반성문", "단문", "엽서"),
                 selectedOptions = selectedFormats,

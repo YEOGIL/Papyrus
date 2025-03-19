@@ -2,7 +2,6 @@ package com.intel.papyrusbaby.screen
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -76,6 +74,9 @@ fun HomeScreen(navController: NavController) {
     // 작가 리스트를 저장할 상태
     var authors by remember { mutableStateOf<List<Author>>(emptyList()) }
 
+    // 현재 선택된 직업 (없으면 null)
+    var selectedOccupation by remember { mutableStateOf<String?>(null) }
+
     // 서버에서 데이터를 가져올 때 코루틴 사용
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
@@ -90,6 +91,12 @@ fun HomeScreen(navController: NavController) {
             // 로딩 끝
             isLoading = false
         }
+    }
+
+    // authors가 갱신될 때마다 모든 직업을 집계
+    // flatMap -> 중첩 리스트를 1차원으로 펼친 뒤, distinct()로 중복 제거
+    val allOccupations = remember(authors) {
+        authors.flatMap { it.occupation }.distinct()
     }
 
     Column(
@@ -136,62 +143,110 @@ fun HomeScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.size(70.dp))
 
-        val writerType = listOf("작가", "대통령", "재외동포 박현진", "시인", "철학자", "정치인", "과학자", "가수", "교장선생님")
+        // (1) 모든 직업을 상단에 표시하는 탭
         Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
             Spacer(modifier = Modifier.size(10.dp))
-            writerType.forEach { writer ->
+            // "전체" 탭을 하나 추가하고, 누르면 selectedOccupation을 null로 (즉, 필터 해제)
+            Box(
+                modifier = Modifier
+                    .border(
+                        1.dp,
+                        shape = RoundedCornerShape(5.dp),
+                        color = Color(0xFF5C5945)
+                    )
+                    .background(
+                        color = if (selectedOccupation == null) Color(0xFF5C5945) else Color.Transparent,
+                        shape = RoundedCornerShape(5.dp)
+                    )
+                    .clickable { selectedOccupation = null }
+            ) {
                 Text(
-                    text = writer,
-                    color = Color(0xFF5C5945),
+                    text = "전체",
+                    color = if (selectedOccupation == null) Color(0xFFFFFAE6) else Color(0xFF5C5945),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                )
+            }
+            Spacer(modifier = Modifier.size(10.dp))
+
+            // allOccupations를 순회하며 버튼 생성
+            allOccupations.forEach { occupation ->
+                Box(
                     modifier = Modifier
                         .border(
                             1.dp,
                             shape = RoundedCornerShape(5.dp),
-                            color = Color(0xFF94907F)
+                            color = Color(0xFF5C5945)
                         )
-                        .clickable {}
-                        .padding(horizontal = 10.dp, vertical = 5.dp)
-                )
+                        .background(
+                            color = if (selectedOccupation == occupation) Color(0xFF5C5945) else Color.Transparent,
+                            shape = RoundedCornerShape(5.dp)
+                        )
+                        .clickable {
+                            selectedOccupation = occupation
+                        }
+                ) {
+                    Text(
+                        text = occupation,
+                        color = if (selectedOccupation == occupation) Color(0xFFFFFAE6) else Color(
+                            0xFF5C5945
+                        ),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.size(10.dp))
             }
             Spacer(modifier = Modifier.size(10.dp))
         }
 
-        // (A) 로딩 중이면 "서버 통신중..." 표시
-        if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("데이터를 불러옵니다...", fontSize = 18.sp, color = Color(0xFF5C5945))
+        // (2) 리스트 표시
+        when {
+            // (A) 로딩중
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("데이터를 불러오는 중입니다...", fontSize = 18.sp, color = Color(0xFF5C5945))
+                }
             }
-        }
-        // (B) 로딩이 끝났는데 authors가 비어있다면, "데이터 없음" 같은 안내 표시
-        else if (authors.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("불러올 데이터가 없습니다.")
+
+            // (B) 로딩은 끝났는데, authors가 비어있으면 안내
+            authors.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("불러올 데이터가 없습니다.")
+                }
             }
-        }
-        // (C) 로딩도 끝나고, authors도 존재한다면
-        else {
-            // Row with horizontal scrolling and spacing between AuthorBox
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(30.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                authors.forEach { author ->
-                    AuthorBox(author = author, navController = navController)
+
+            // (C) 정상적으로 데이터가 있는 경우
+            else -> {
+                // selectedOccupation이 null이면 전체, 아니면 필터
+                val filteredAuthors = if (selectedOccupation != null) {
+                    authors.filter { it.occupation.contains(selectedOccupation) }
+                } else {
+                    authors
+                }
+
+                // Row로 감싸서 가로 스크롤 형태로 작가 목록 표시
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(30.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    filteredAuthors.forEach { author ->
+                        AuthorBox(author = author, navController = navController)
+                    }
                 }
             }
         }
