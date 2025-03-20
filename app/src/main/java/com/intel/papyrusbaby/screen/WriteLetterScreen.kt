@@ -2,6 +2,7 @@
 
 package com.intel.papyrusbaby.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -300,9 +302,18 @@ fun WriteLetterScreen(
 // 간단한 커스텀 입력 필드
 @Composable
 fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modifier: Modifier) {
+    val context = LocalContext.current
     BasicTextField(
         value = currentInput,
-        onValueChange = onValueChange,
+        onValueChange = { newText ->
+            val updatedText = if (newText.length > 200) {
+                Toast.makeText(context, "200자까지만 입력 가능합니다.", Toast.LENGTH_SHORT).show()
+                newText.take(200)
+            } else {
+                newText
+            }
+            onValueChange(updatedText)
+        },
         modifier = modifier
             .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(10.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -314,7 +325,7 @@ fun CustomInputField(currentInput: String, onValueChange: (String) -> Unit, modi
         decorationBox = { innerTextField ->
             if (currentInput.isEmpty()) {
                 Text(
-                    text = "상세 내용을 입력하세요.",
+                    text = "상세 내용을 입력하세요. (200자 이하)",
                     color = Color(0xFF5C5945),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -369,12 +380,13 @@ fun ExpandableFilter(
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .fillMaxWidth(0.7f)
-                .background(Color(0xFFF0F0F0))
                 .border(
                     width = 0.5.dp,
                     color = Color(0xFF777777),
                     shape = RoundedCornerShape(4.5.dp)
                 )
+                .background(Color(0xFFF0F0F0))
+                .padding(16.dp)
         ) {
             // 최대 높이: 화면 높이의 50%
             val configuration = LocalConfiguration.current
