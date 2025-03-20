@@ -49,6 +49,7 @@ import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.firebase.ArchiveItem
 import com.intel.papyrusbaby.firebase.ArchiveRepository
 import com.intel.papyrusbaby.flask.OpenAiServer
+import com.intel.papyrusbaby.navigation.Screen
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.text.SimpleDateFormat
@@ -290,7 +291,11 @@ fun WrittenLetterScreen(
                             color = Color(0xFF94907F)
                         )
                         .clickable {
-                            navController.popBackStack()
+                            navController.navigate(Screen.Write.createRoute(writer = decodedWriter)) {
+                                popUpTo(Screen.WrittenLetter.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
+
                         }
                         .padding(horizontal = 10.dp, vertical = 5.dp))
             }
