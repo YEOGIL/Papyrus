@@ -267,7 +267,7 @@ fun AuthorBox(author: Author, navController: NavController) {
     Box(
         modifier = Modifier
             .size(width = 180.dp, height = 240.dp)
-            .background(color = Color(0xFFEBECEC), shape = RoundedCornerShape(20.dp))
+            .background(color = Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
             .clickable {
                 // 작가 정보 다이얼로그 표시
                 showInfoDialog = true

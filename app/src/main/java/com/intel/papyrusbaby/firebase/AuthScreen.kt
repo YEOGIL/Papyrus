@@ -222,6 +222,8 @@ fun AuthScreenEmailPassword(
             )
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
         // (F) 회원가입 / 로그인 버튼
         Button(
             onClick = {
