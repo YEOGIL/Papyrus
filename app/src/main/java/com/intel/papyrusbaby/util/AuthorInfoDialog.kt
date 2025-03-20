@@ -29,6 +29,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.intel.papyrusbaby.firebase.Author
+import com.intel.papyrusbaby.navigation.Screen
 
 @Composable
 fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: () -> Unit) {
@@ -152,9 +153,7 @@ fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: ()
                                         onDismiss()
 
                                         // 2) author.name 을 "write?writer=..." 로 이동
-                                        navController.navigate("write?writer=${author.name}") {
-                                            launchSingleTop = true
-                                        }
+                                        navController.navigate(Screen.Write.createRoute(author.name))
                                     }
                             )
                         }

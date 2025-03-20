@@ -54,6 +54,7 @@ import androidx.navigation.compose.rememberNavController
 import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.firebase.Author
 import com.intel.papyrusbaby.firebase.AuthorRepository
+import com.intel.papyrusbaby.navigation.Screen
 import com.intel.papyrusbaby.util.ThemeSelectionDialog
 import java.net.URLEncoder
 
@@ -267,8 +268,17 @@ fun WriteLetterScreen(
 
                     // Navigate to WrittenLetterScreen
                     navController.navigate(
-                        "writtenLetter?writer=$encodedAuthor&documentType=$encodedDocType&prompt=$encodedPrompt&theme=$encodedTheme"
-                    )
+                        Screen.WrittenLetter.createRoute(
+                            encodedAuthor,
+                            encodedDocType,
+                            encodedPrompt,
+                            encodedTheme
+                        )
+                    ) {
+                        // Pop up to the previous screen
+                        popUpTo(Screen.Write.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
 
                     // 값 초기화
                     currentInput = ""

@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.intel.papyrusbaby.firebase.ArchiveItem
 import com.intel.papyrusbaby.firebase.ArchiveRepository
+import com.intel.papyrusbaby.navigation.Screen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -81,10 +82,11 @@ fun ArchivedListScreen(navController: NavController) {
                             .padding(8.dp)
                             .background(color = Color(0xFF94907F), shape = RoundedCornerShape(8.dp))
                             .clickable {
-                                navController.navigate("archiveDetail/${item.docId}") {
-                                    popUpTo("archiveList") { inclusive = true }
+                                navController.navigate(Screen.ArchiveDetail.createRoute(item.docId)) {
+                                    popUpTo(Screen.Archive.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
+
                             }
                             .padding(16.dp)
                     ) {

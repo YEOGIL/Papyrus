@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -41,7 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,16 +52,15 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import androidx.core.content.res.ResourcesCompat
 import androidx.navigation.NavController
-import com.intel.papyrusbaby.R
+import com.intel.papyrusbaby.ui.theme.LetterBackground
+import com.intel.papyrusbaby.ui.theme.LetterFont
 import java.io.File
 import java.io.FileOutputStream
 
@@ -74,172 +71,105 @@ fun ImageGenerationScreen(
 ) {
     val context = LocalContext.current
 
-    // 1. 폰트 패밀리 정의
-    val defaultFont = FontFamily.Default
-    val boldFont = FontFamily(Font(R.font.boldandclear))
-    val cuteFont = FontFamily(Font(R.font.cute))
-    val handFont = FontFamily(Font(R.font.handwriting))
-    val handThinFont = FontFamily(Font(R.font.handwritingthin))
+    // 상태 변경: enum을 이용
+    var selectedBackground by remember { mutableStateOf(LetterBackground.PAPER_1) }
+    var selectedFont by remember { mutableStateOf(LetterFont.BOLD) }
 
-    // 2. Typeface는 한 번 로딩해서 캐싱
-    val defaultTypeface = Typeface.DEFAULT
-    val boldTypeface = ResourcesCompat.getFont(context, R.font.boldandclear) ?: Typeface.DEFAULT
-    val cuteTypeface = ResourcesCompat.getFont(context, R.font.cute) ?: Typeface.DEFAULT
-    val handwritingTypeface =
-        ResourcesCompat.getFont(context, R.font.handwriting) ?: Typeface.DEFAULT
-    val handwritingThinTypeface =
-        ResourcesCompat.getFont(context, R.font.handwritingthin) ?: Typeface.DEFAULT
-
-    // 3. FontFamily와 Typeface 매핑 (drawLetterOnCanvas에서 사용)
-    val fontMapping = remember {
-        mapOf(
-            defaultFont to defaultTypeface,
-            boldFont to boldTypeface,
-            cuteFont to cuteTypeface,
-            handFont to handwritingTypeface,
-            handThinFont to handwritingThinTypeface
-        )
-    }
-
-    // 배경 및 폰트 선택 상태
-    var backgroundRes by remember { mutableIntStateOf(R.drawable.paper01) }
-    var selectedFont by remember { mutableStateOf<FontFamily>(defaultFont) }
-
-    // 고정 이미지 해상도 (원본 생성)
+    // 고정 이미지 해상도
     val fixedWidth = 1440
     val fixedHeight = 1920
 
     // 생성된 Bitmap 상태
     var generatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    // 상태 변경 시마다 새 이미지를 생성 (try-catch로 예외 로깅 추가)
-    LaunchedEffect(backgroundRes, selectedFont, letterText) {
+    // Typeface 매핑을 enum을 사용해 생성 (LetterFont별)
+    val fontMapping: Map<FontFamily, Typeface> = remember {
+        LetterFont.entries.associate { letterFont ->
+            letterFont.getFontFamily() to letterFont.getTypeface(context)
+        }
+    }
+
+    LaunchedEffect(selectedBackground, selectedFont, letterText) {
         try {
-            Log.d(
-                "ImageGenerationScreen",
-                "LaunchedEffect triggered - backgroundRes: $backgroundRes, selectedFont: $selectedFont, letterText: $letterText"
-            )
             generatedBitmap = generateFixedSizeBitmap(fixedWidth, fixedHeight) { canvas ->
                 drawLetterOnCanvas(
                     context = context,
                     canvas = canvas,
-                    backgroundRes = backgroundRes,
+                    backgroundRes = selectedBackground.resId,
                     letterText = letterText,
-                    fontFamily = selectedFont,
+                    fontFamily = selectedFont.getFontFamily(),
                     width = fixedWidth,
                     height = fixedHeight,
                     fontMapping = fontMapping
                 )
             }
-            Log.d("ImageGenerationScreen", "New image generated")
         } catch (e: Exception) {
             Log.e("ImageGenerationScreen", "Error generating image", e)
         }
     }
-
-    Column(
-        modifier = Modifier
-            .background(Color(0xFFfffae6))
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        TopBar(navController = navController, title = "이미지 생성")
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 편지지 선택
-        BackgroundSelector(
-            selectedBackgroundRes = backgroundRes,
-            onBackgroundSelected = { res ->
-                Log.d("BackgroundSelector", "Selected background: $res")
-                backgroundRes = res
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 폰트 선택
-        FontSelector(
-            defaultFont = defaultFont,
-            boldAndClearFont = boldFont,
-            cuteFont = cuteFont,
-            handwritingFont = handFont,
-            handwritingThinFont = handThinFont,
-            selectedFont = selectedFont,
-            onFontSelected = { font ->
-                Log.d("FontSelector", "Selected font: $font")
-                selectedFont = font
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 생성된 이미지 미리보기
-        generatedBitmap?.let { bitmap ->
-            GeneratedLetterPreview(bitmap = bitmap)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 공유/저장 버튼
-        generatedBitmap?.let { bitmap ->
-            ActionButtons(context = context, bitmap = bitmap)
-        }
-    }
-}
-
-@Composable
-fun TopBar(navController: NavController, title: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Column(modifier = Modifier
+        .background(Color(0xFFfffae6))
+        .fillMaxWidth()
+        .padding(16.dp)) {
         Text(
             text = "뒤로가기",
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFF5C5945),
             modifier = Modifier
+                .align(Alignment.End)
                 .clickable { navController.popBackStack() }
                 .border(1.dp, shape = RoundedCornerShape(5.dp), color = Color(0xFF94907F))
                 .padding(horizontal = 10.dp, vertical = 5.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            BackgroundSelector(
+                selectedBackground = selectedBackground,
+                onBackgroundSelected = { selectedBackground = it }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            FontSelector(
+                selectedFont = selectedFont,
+                onFontSelected = { selectedFont = it }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            generatedBitmap?.let { bitmap ->
+                GeneratedLetterPreview(bitmap = bitmap)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            generatedBitmap?.let { bitmap ->
+                ActionButtons(context = context, bitmap = bitmap)
+            }
+        }
     }
 }
 
 @Composable
 fun BackgroundSelector(
-    selectedBackgroundRes: Int,
-    onBackgroundSelected: (Int) -> Unit
+    selectedBackground: LetterBackground,
+    onBackgroundSelected: (LetterBackground) -> Unit
 ) {
     Column {
-        Text(text = "편지지 선택", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = "편지지를 골라주세요", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            listOf(
-                R.drawable.paper01,
-                R.drawable.paper02,
-                R.drawable.paper03,
-                R.drawable.paper04,
-                R.drawable.paper05
-            ).forEach { res ->
+            LetterBackground.entries.forEach { background ->
                 Image(
-                    painter = painterResource(id = res),
-                    contentDescription = "Paper Image",
+                    painter = painterResource(id = background.resId),
+                    contentDescription = "편지지 ${background.name}",
                     modifier = Modifier
                         .size(60.dp)
-                        .clickable { onBackgroundSelected(res) }
+                        .clickable { onBackgroundSelected(background) }
                         .border(
-                            width = if (selectedBackgroundRes == res) 2.dp else 1.dp,
-                            color = if (selectedBackgroundRes == res) Color(0xFF5C5945) else Color(
+                            width = if (selectedBackground == background) 2.dp else 1.dp,
+                            color = if (selectedBackground == background) Color(0xFF5C5945) else Color(
                                 0xFF94907F
                             ),
                             shape = RoundedCornerShape(8.dp)
@@ -252,16 +182,11 @@ fun BackgroundSelector(
 
 @Composable
 fun FontSelector(
-    defaultFont: FontFamily,
-    boldAndClearFont: FontFamily,
-    cuteFont: FontFamily,
-    handwritingFont: FontFamily,
-    handwritingThinFont: FontFamily,
-    selectedFont: FontFamily,
-    onFontSelected: (FontFamily) -> Unit
+    selectedFont: LetterFont,
+    onFontSelected: (LetterFont) -> Unit
 ) {
     Column {
-        Text(text = "폰트 선택", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = "글꼴을 골라주세요", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -269,30 +194,19 @@ fun FontSelector(
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
         ) {
-            val fonts = listOf(
-                "Def" to defaultFont,
-                "Bold" to boldAndClearFont,
-                "Cute" to cuteFont,
-                "Hand" to handwritingFont,
-                "Thin" to handwritingThinFont
-            )
-            fonts.forEach { (label, fontFamily) ->
+            LetterFont.entries.forEach { letterFont ->
                 Box(
                     modifier = Modifier
-                        .border(
-                            1.dp,
-                            shape = RoundedCornerShape(5.dp),
-                            color = Color(0xFF5C5945)
-                        )
+                        .border(1.dp, shape = RoundedCornerShape(5.dp), color = Color(0xFF5C5945))
                         .background(
-                            color = if (selectedFont == fontFamily) Color(0xFF5C5945) else Color.Transparent,
+                            color = if (selectedFont == letterFont) Color(0xFF5C5945) else Color.Transparent,
                             shape = RoundedCornerShape(5.dp)
                         )
-                        .clickable { onFontSelected(fontFamily) }
+                        .clickable { onFontSelected(letterFont) }
                 ) {
                     Text(
-                        text = label,
-                        color = if (selectedFont == fontFamily) Color(0xFFFFFAE6) else Color(
+                        text = letterFont.label,
+                        color = if (selectedFont == letterFont) Color(0xFFFFFAE6) else Color(
                             0xFF5C5945
                         ),
                         fontSize = 16.sp,
@@ -300,7 +214,6 @@ fun FontSelector(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                     )
                 }
-
             }
         }
     }

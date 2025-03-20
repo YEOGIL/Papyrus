@@ -1,6 +1,7 @@
 package com.intel.papyrusbaby
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,13 +35,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
+import com.intel.papyrusbaby.navigation.Screen
 import com.intel.papyrusbaby.util.LogOutDialog
 import kotlinx.coroutines.launch
 
@@ -51,22 +56,25 @@ fun AppBar(
     content: @Composable (PaddingValues) -> Unit,
     navController: NavController
 ) {
+    // 상단/하단바를 숨길 라우트를 정의합니다.
+    // 예: 인증 화면("auth")에서는 두 바 모두 숨기고, 이미지 생성 화면("imageGeneration")에서는 하단바만 숨김
+    val hideTopBarRoutes = listOf(Screen.Auth.route)
+    val hideBottomBarRoutes = listOf(Screen.Auth.route, Screen.ImageGeneration.route)
+
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
-    // 현재 라우트를 가져옴
+    // 현재 라우트를 읽어옵니다.
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // 만약 currentRoute가 "auth"라면, 상단바/하단바 없이 content만 보여주기
-    // -> 또는 그냥 ModalNavigationDrawer 자체를 생략하는 방법도 있음
-    if (currentRoute == "auth") {
-        // top/bottom bar 숨김: 바로 content만 표시
+    // 만약 현재 라우트가 hideTopBarRoutes에 포함되어 있다면 상단바와 하단바를 모두 숨기고 content만 노출합니다.
+    if (currentRoute in hideTopBarRoutes) {
         content(PaddingValues())
         return
     }
 
-    // 그 외 화면일 때만 Drawer + topBar + bottomBar
+    // 그 외의 경우 ModalNavigationDrawer와 Scaffold로 상단바와 하단바를 구성합니다.
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = drawerState.isOpen,
@@ -82,39 +90,45 @@ fun AppBar(
         content = {
             Scaffold(
                 topBar = {
+                    // 상단바는 hideTopBarRoutes에 포함되지 않은 경우 항상 노출합니다.
                     PapyrusTopBar(
+                        navController = navController,
+                        currentRoute = currentRoute,
                         onDrawerOpen = { coroutineScope.launch { drawerState.open() } }
                     )
                 },
                 bottomBar = {
-                    PapyrusBottomBar(
-                        currentRoute = currentRoute,
-                        onHomeClick = {
-                            navController.navigate("home") {
-                                popUpTo("home") { inclusive = true }
-                                launchSingleTop = true
+                    // 하단바는 현재 라우트가 hideBottomBarRoutes에 포함되어 있지 않은 경우에만 노출합니다.
+                    if (currentRoute !in hideBottomBarRoutes) {
+                        PapyrusBottomBar(
+                            currentRoute = currentRoute,
+                            onHomeClick = {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Home.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onWriteClick = {
+                                navController.navigate(Screen.Write.createRoute(writer = "")) {
+                                    popUpTo(Screen.Write.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onArchiveClick = {
+                                navController.navigate(Screen.Archive.route) {
+                                    popUpTo(Screen.Archive.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
-                        },
-                        onWriteClick = {
-                            navController.navigate("write") {
-                                popUpTo("write") { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        },
-                        onArchiveClick = {
-                            navController.navigate("archive") {
-                                popUpTo("archive") { inclusive = true }
-                                launchSingleTop = true
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
             ) { paddingValues -> content(paddingValues) }
         }
     )
 }
 
-// Drawer content definition
+// Drawer content 정의
 @Composable
 fun DrawerContent(
     navController: NavController,
@@ -132,7 +146,6 @@ fun DrawerContent(
                 // signOut
                 Firebase.auth.signOut()
                 coroutineScope.launch { drawerState.close() }
-                // 그 후 네비게이트
                 navController.navigate("auth") {
                     popUpTo("auth") { inclusive = true }
                 }
@@ -155,10 +168,7 @@ fun DrawerContent(
                 contentDescription = "CloseDrawer",
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .clickable {
-                        // Close the Drawer
-                        coroutineScope.launch { drawerState.close() }
-                    }
+                    .clickable { coroutineScope.launch { drawerState.close() } }
             )
             Icon(
                 painter = painterResource(R.drawable.papyruslogo),
@@ -168,22 +178,17 @@ fun DrawerContent(
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-
-        // 유저 정보가 있을 경우 인사말 표시
         if (currentUser != null) {
             Text(
                 text = "반갑습니다, ${currentUser.displayName ?: currentUser.email ?: "User"} 님",
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         } else {
             Text(
                 text = "로그인이 필요합니다",
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -195,10 +200,7 @@ fun DrawerContent(
                     }
                 }
         ) {
-            Text(
-                text = "홈으로",
-                modifier = Modifier.padding(16.dp)
-            )
+            Text(text = "홈으로", modifier = Modifier.padding(16.dp))
         }
         Box(
             modifier = Modifier
@@ -211,10 +213,7 @@ fun DrawerContent(
                     }
                 }
         ) {
-            Text(
-                text = "작성하기",
-                modifier = Modifier.padding(16.dp)
-            )
+            Text(text = "작성하기", modifier = Modifier.padding(16.dp))
         }
         Box(
             modifier = Modifier
@@ -227,25 +226,15 @@ fun DrawerContent(
                     }
                 }
         ) {
-            Text(
-                text = "보관함",
-                modifier = Modifier.padding(16.dp)
-            )
+            Text(text = "보관함", modifier = Modifier.padding(16.dp))
         }
-
-        // Add more items as needed
-
-        // 로그 아웃
         if (currentUser != null) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showLogOutDialog = true }
             ) {
-                Text(
-                    text = "로그아웃",
-                    modifier = Modifier.padding(16.dp)
-                )
+                Text(text = "로그아웃", modifier = Modifier.padding(16.dp))
             }
 
             // 회원 탈퇴
@@ -266,6 +255,8 @@ fun DrawerContent(
 
 @Composable
 fun PapyrusTopBar(
+    navController: NavController,
+    currentRoute: String?,
     onDrawerOpen: () -> Unit
 ) {
     Box(
@@ -293,6 +284,26 @@ fun PapyrusTopBar(
                 .align(Alignment.Center)
                 .padding(12.dp)
         )
+
+        // Back button
+        if (currentRoute == "archiveDetail" || currentRoute == "imageGeneration") {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "뒤로가기",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF5C5945),
+                    modifier = Modifier
+                        .clickable { navController.popBackStack() }
+                        .border(1.dp, shape = RoundedCornerShape(5.dp), color = Color(0xFF94907F))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                )
+            }
+        }
     }
 }
 
@@ -325,7 +336,7 @@ fun PapyrusBottomBar(
         )
         Icon(
             painter = painterResource(
-                id = if (currentRoute == "write")
+                id = if (currentRoute == "write?writer={writer}")
                     R.drawable.icon_add_filled
                 else
                     R.drawable.icon_add_outline

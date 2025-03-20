@@ -7,20 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.intel.papyrusbaby.firebase.AuthScreenEmailPassword
-import com.intel.papyrusbaby.screen.ArchivedListContentsScreen
-import com.intel.papyrusbaby.screen.ArchivedListScreen
-import com.intel.papyrusbaby.screen.HomeScreen
-import com.intel.papyrusbaby.screen.ImageGenerationScreen
-import com.intel.papyrusbaby.screen.WriteLetterScreen
-import com.intel.papyrusbaby.screen.WrittenLetterScreen
+import com.intel.papyrusbaby.navigation.AppNavHost
+import com.intel.papyrusbaby.navigation.Screen
 import com.intel.papyrusbaby.ui.theme.PapyrusBabyTheme
 
 class MainActivity : ComponentActivity() {
@@ -56,89 +48,17 @@ class MainActivity : ComponentActivity() {
 //                    }
                 }
 
-                // writtenLetter 화면에 필요한 네비게이션 인자들을 미리 정의
-                val writtenLetterArgs = listOf(
-                    navArgument("writer") { defaultValue = "" },
-                    navArgument("documentType") { defaultValue = "" },
-                    navArgument("prompt") { defaultValue = "" },
-                    navArgument("theme") { defaultValue = "" }
-                )
-
                 AppBar(
-                    // currentUser를 state에서 읽어옴
                     currentUser = currentFirebaseUser.value,
                     onDeleteAccount = onDeleteAccount,
+                    navController = navController,
                     content = { paddingValues ->
-                        NavHost(
+                        AppNavHost(
                             navController = navController,
-                            startDestination = if (currentFirebaseUser.value == null) "auth" else "home",
+                            startDestination = if (currentFirebaseUser.value == null) Screen.Auth.route else Screen.Home.route,
                             modifier = Modifier.padding(paddingValues)
-                        ) {
-                            composable("auth") {
-                                AuthScreenEmailPassword(navController) {
-                                    // 로그인/회원가입 성공 시 호출
-                                    navController.navigate("home") {
-                                        popUpTo("auth") { inclusive = true }
-                                    }
-                                }
-                            }
-                            composable("home") { HomeScreen(navController) }
-                            composable(
-                                route = "write?writer={writer}",
-                                arguments = listOf(
-                                    navArgument("writer") { defaultValue = "" }
-                                )
-                            ) { backStackEntry ->
-                                val writerParam =
-                                    backStackEntry.arguments?.getString("writer") ?: ""
-                                WriteLetterScreen(navController, writerParam)
-                            }
-                            composable(
-                                route = "writtenLetter?writer={writer}&documentType={documentType}&prompt={prompt}&theme={theme}",
-                                arguments = writtenLetterArgs
-                            ) { backStackEntry ->
-                                val writer = backStackEntry.arguments?.getString("writer") ?: ""
-                                val documentType =
-                                    backStackEntry.arguments?.getString("documentType") ?: ""
-                                val prompt = backStackEntry.arguments?.getString("prompt") ?: ""
-                                val theme = backStackEntry.arguments?.getString("theme") ?: ""
-
-                                WrittenLetterScreen(
-                                    writer = writer,
-                                    documentType = documentType,
-                                    prompt = prompt,
-                                    theme = theme,  // 전달받은 테마 문자열
-                                    navController = navController
-                                )
-                            }
-                            composable("archive") { ArchivedListScreen(navController) }
-                            composable(
-                                route = "archiveDetail/{docId}",
-                                arguments = listOf(
-                                    navArgument("docId") { defaultValue = "" }
-                                )
-                            ) { backStackEntry ->
-                                val docId = backStackEntry.arguments?.getString("docId") ?: ""
-                                ArchivedListContentsScreen(
-                                    docId = docId,
-                                    navController = navController
-                                )
-                            }
-                            composable(
-                                route = "imageGeneration?letterText={letterText}",
-                                arguments = listOf(
-                                    navArgument("letterText") { defaultValue = "" }
-                                )
-                            ) { backStackEntry ->
-                                val letterText = backStackEntry.arguments?.getString("letterText") ?: ""
-                                ImageGenerationScreen(
-                                    navController = navController,
-                                    letterText = letterText
-                                )
-                            }
-                        }
-                    },
-                    navController = navController
+                        )
+                    }
                 )
             }
         }
