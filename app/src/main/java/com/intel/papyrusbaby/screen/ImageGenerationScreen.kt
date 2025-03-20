@@ -106,8 +106,8 @@ fun ImageGenerationScreen(
     var selectedFont by remember { mutableStateOf<FontFamily>(defaultFont) }
 
     // 고정 이미지 해상도 (원본 생성)
-    val fixedWidth = 768
-    val fixedHeight = 1024
+    val fixedWidth = 1440
+    val fixedHeight = 1920
 
     // 생성된 Bitmap 상태
     var generatedBitmap by remember { mutableStateOf<Bitmap?>(null) }

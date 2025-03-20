@@ -264,8 +264,9 @@ fun ShowArchivedLetterContents(
                     )
                     .clickable {
                         // 이미지 생성 화면
-                        navController.navigate("imageGeneration?letterText=${archiveItem.generatedText}") {
-                            popUpTo("archiveList") { inclusive = true }
+                        val encodedLetterText = Uri.encode(archiveItem.generatedText)
+                        navController.navigate("imageGeneration?letterText=$encodedLetterText") {
+                            popUpTo("archiveDetail") { inclusive = true }
                         }
                     }
                     .padding(horizontal = 10.dp, vertical = 5.dp)
