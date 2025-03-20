@@ -57,7 +57,6 @@ import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.firebase.Author
 import com.intel.papyrusbaby.firebase.AuthorRepository
 import com.intel.papyrusbaby.navigation.Screen
-import com.intel.papyrusbaby.ui.theme.PapyrusLightGray
 import com.intel.papyrusbaby.ui.theme.PapyrusMainBackground
 import com.intel.papyrusbaby.util.ThemeSelectionDialog
 import java.net.URLEncoder
@@ -127,7 +126,6 @@ fun WriteLetterScreen(
         ThemeSelectionDialog(
             allThemes = allThemes,
             initiallySelected = selectedThemes,
-            onDismiss = { showThemeSelectionDialog = false },
             onConfirm = { newSelection ->
                 selectedThemes = newSelection
                 showThemeSelectionDialog = false

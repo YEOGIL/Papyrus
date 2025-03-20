@@ -446,9 +446,6 @@ fun drawLetterOnCanvas(
         }
     }
 
-    // 최종 StaticLayout로 텍스트를 그림
-    val textHeight = staticLayout.height
-
     // -----------------------------
     // 상단 정렬 (top alignment)
     // -----------------------------

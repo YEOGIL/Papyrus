@@ -1,11 +1,11 @@
 package com.intel.papyrusbaby.ui.theme
 
+import android.content.Context
+import android.graphics.Typeface
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import com.intel.papyrusbaby.R
-import android.content.Context
 import androidx.core.content.res.ResourcesCompat
-import android.graphics.Typeface
+import com.intel.papyrusbaby.R
 
 enum class LetterBackground(val resId: Int) {
     PAPER_1(R.drawable.paper01),
@@ -15,7 +15,7 @@ enum class LetterBackground(val resId: Int) {
     PAPER_5(R.drawable.paper05)
 }
 
-enum class LetterFont(val label: String, val fontResId: Int?) {
+enum class LetterFont(val label: String, private val fontResId: Int?) {
     BOLD("기본", R.font.boldandclear),
     CUTE("살랑", R.font.cute),
     HAND("낙엽", R.font.handwriting),

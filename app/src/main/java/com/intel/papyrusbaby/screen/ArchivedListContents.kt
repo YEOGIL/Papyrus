@@ -92,8 +92,6 @@ fun ShowArchivedLetterContents(
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    var showImageGenDialog by remember { mutableStateOf(false) }
-
     // 화면 구성 (WrittenLetterScreen 참고)
     Column(
         modifier = Modifier
@@ -103,7 +101,7 @@ fun ShowArchivedLetterContents(
     ) {
 
         // 1) 메타 정보 (작성일, 작가 등)
-        Box() {
+        Box {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = "작성일: ${archiveItem.writtenDate}",

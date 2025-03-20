@@ -36,7 +36,6 @@ import com.intel.papyrusbaby.screen.ThemeType
 fun ThemeSelectionDialog(
     allThemes: List<ThemeType>,
     initiallySelected: List<ThemeType>,
-    onDismiss: () -> Unit,
     onConfirm: (List<ThemeType>) -> Unit
 ) {
     // 내부에서 체크박스로 선택한 항목을 저장할 임시 상태

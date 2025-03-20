@@ -2,6 +2,7 @@ package com.intel.papyrusbaby.util
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -32,7 +33,11 @@ import com.intel.papyrusbaby.firebase.Author
 import com.intel.papyrusbaby.navigation.Screen
 
 @Composable
-fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: () -> Unit) {
+fun AuthorInfoDialog(
+    author: Author,
+    navController: NavController,
+    onDismiss: () -> Unit
+) {
     val fontColor = Color(0xFF221F10)
 
     Dialog(onDismissRequest = onDismiss) {
@@ -41,122 +46,134 @@ fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: ()
             color = Color(0xFFF7ECCD),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+            // Column 전체에 padding 적용하고, 필요시 스크롤 가능하도록 함.
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth()
+            ) {
+                // 상단: 닫기 아이콘 (우측 정렬)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Icon(
                         imageVector = Icons.Filled.Close,
                         contentDescription = "Close",
                         tint = Color(0xFFFFFAE6),
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
                             .background(color = Color(0xFF5C5945), shape = RoundedCornerShape(8.dp))
                             .clickable { onDismiss() }
+                            .padding(4.dp)
                     )
                 }
-                Row {
-                    // 1) 네트워크 이미지 로딩 (Coil)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 1) 이미지 (상단 중앙)
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
                     AsyncImage(
                         model = author.imageUrl,
                         contentDescription = "Author Image",
-                        modifier = Modifier.height(80.dp)
+                        modifier = Modifier.size(150.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column(
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 2) 작가명과 직업 (한 줄에 배치)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = author.name,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = fontColor,
+                        textAlign = TextAlign.Start
+                    )
+                    val occupationText = author.occupation.joinToString(" ")
+                    if (occupationText.isNotEmpty()) {
+                        Text(
+                            text = occupationText,
+                            fontWeight = FontWeight.Bold,
+                            color = fontColor,
+                            textAlign = TextAlign.End
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3) 대표작
+                val worksText = author.works.joinToString("  ")
+                if (worksText.isNotEmpty()) {
+                    Text(
+                        text = worksText,
+                        fontWeight = FontWeight.Bold,
+                        color = fontColor,
+                        textAlign = TextAlign.Start,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        // 2) 이름
-                        Text(
-                            text = author.name,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = fontColor,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            .padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                // 4) 명언 (첫 번째만 표시)
+                if (author.quotes.isNotEmpty()) {
+                    val quote = "\"${author.quotes[0]}\""
+                    Text(
+                        text = quote,
+                        fontWeight = FontWeight.Bold,
+                        color = fontColor,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                        // 3) 직업 (occupation)
-                        // 예: ["작가", "시인"] -> "작가 시인"
-                        val occupationText = author.occupation.joinToString(", ")
-                        if (occupationText.isNotEmpty()) {
-                            Text(
-                                text = occupationText,
-                                fontWeight = FontWeight.Bold,
-                                color = fontColor,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                // 5) 태그 (genres를 해시태그 형태로 표시)
+                val genreText = author.genres.joinToString("  ") { "#$it" }
+                if (genreText.isNotEmpty()) {
+                    Text(
+                        text = genreText,
+                        fontWeight = FontWeight.Bold,
+                        color = fontColor,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // 4) 장르를 해시태그 형식으로 표시
-                        // 예: ["철학", "담담한"] -> "#철학 #담담한"
-                        val genreText = author.genres.joinToString("  ") { "#$it" }
-                        if (genreText.isNotEmpty()) {
-                            Text(
-                                text = genreText,
-                                fontWeight = FontWeight.Bold,
-                                color = fontColor,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // 5) 작가 작품
-                        // 예: ["작품1", "작품2"] -> "작품1, 작품2"
-                        val worksText = author.works.joinToString("  ")
-                        if (worksText.isNotEmpty()) {
-                            Text(
-                                text = worksText,
-                                fontWeight = FontWeight.Bold,
-                                color = fontColor,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // 6) 작가 명언
-                        // 예: ["명언1", "명언2"] -> "명언1, 명언2"
-                        val quotesText = "\"${author.quotes[0]}\""
-                        if (quotesText.isNotEmpty()) {
-                            Text(
-                                text = quotesText,
-                                fontWeight = FontWeight.Bold,
-                                color = fontColor,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Box(
-                            modifier = Modifier.background(
+                // 하단: 작성하기 버튼 (우측 정렬)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(
                                 color = Color(0xFF5C5945),
                                 shape = RoundedCornerShape(8.dp)
                             )
-                        ) {
-                            Text(
-                                text = "작성하기",
-                                color = Color(0xFFFFFAE6),
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .clickable {
-                                        // 1) 다이얼로그 닫기
-                                        onDismiss()
-
-                                        // 2) author.name 을 "write?writer=..." 로 이동
-                                        navController.navigate(Screen.Write.createRoute(author.name))
-                                    }
-                            )
-                        }
+                            .clickable {
+                                onDismiss()
+                                navController.navigate(Screen.Write.createRoute(author.name))
+                            }
+                    ) {
+                        Text(
+                            text = "작성하기",
+                            color = Color(0xFFFFFAE6),
+                            modifier = Modifier.padding(8.dp)
+                        )
                     }
                 }
             }

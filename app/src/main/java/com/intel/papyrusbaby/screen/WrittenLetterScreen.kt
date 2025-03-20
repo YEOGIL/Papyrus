@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -107,8 +106,15 @@ fun WrittenLetterScreen(
         ) { serverResponse, error ->
             isLoading = false
             isFinished = true
-            openAiResponse = serverResponse?.result ?: "응답 없음"
-            generationSuccessful = serverResponse?.isSuccessful ?: false
+            if (error != null) {
+                // 에러는 문자열이므로, error.localizedMessage 대신 error를 그대로 사용
+                Log.e("OpenAiServer", "Server error: $error")
+                openAiResponse = "응답 없음"  // 기본 메시지
+                generationSuccessful = false
+            } else {
+                openAiResponse = serverResponse?.result ?: "응답 없음"
+                generationSuccessful = serverResponse?.isSuccessful ?: false
+            }
         }
     }
 
