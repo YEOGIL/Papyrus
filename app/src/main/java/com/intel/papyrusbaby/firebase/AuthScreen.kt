@@ -1,6 +1,8 @@
 package com.intel.papyrusbaby.firebase
 
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -9,15 +11,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,17 +32,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.intel.papyrusbaby.R
 
 // 비밀번호 규칙 예시: 최소 하나의 영문자와 하나의 숫자 포함, 길이 8~16자
 private val PASSWORD_REGEX = Regex("^(?=.*[A-Za-z])(?=.*\\d).{8,16}$")
@@ -44,6 +58,7 @@ fun isPasswordValid(password: String): Boolean {
     return PASSWORD_REGEX.matches(password)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreenEmailPassword(
     navController: NavController,
@@ -73,6 +88,7 @@ fun AuthScreenEmailPassword(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFFfffae6))
             .padding(horizontal = 16.dp)
             // 아무 데나 탭하면 포커스 해제
             .pointerInput(Unit) {
@@ -83,15 +99,20 @@ fun AuthScreenEmailPassword(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.CenterHorizontally).size(250.dp).offset(y=-40.dp)
+        )
         // 모드별 타이틀
-        Text(text = if (isSignUpMode) "Sign Up" else "Sign In")
+       // Text(text = if (isSignUpMode) "회원가입을 해주세요" else "Sign In")
 
         // (A) 회원가입 모드면 이름 입력
         if (isSignUpMode) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text("이름") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -101,7 +122,7 @@ fun AuthScreenEmailPassword(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email") },
+            label = { Text("이메일") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
@@ -111,7 +132,7 @@ fun AuthScreenEmailPassword(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
+            label = { Text("비밀번호") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -154,7 +175,7 @@ fun AuthScreenEmailPassword(
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
-                label = { Text("Confirm Password") },
+                label = { Text("비밀번호 재확인") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -233,17 +254,38 @@ fun AuthScreenEmailPassword(
                         }
                     )
                 }
-            }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF35713E))
+
         ) {
-            Text(text = if (isSignUpMode) "Sign Up" else "Sign In")
+            Text(text = if (isSignUpMode) "회원가입" else "로그인")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // (G) 모드 전환 버튼
-        Button(
-            onClick = {
-                isSignUpMode = !isSignUpMode
+//        Button(
+//            onClick = {
+//                isSignUpMode = !isSignUpMode
+//                // 입력값 초기화
+//                name = ""
+//                email = ""
+//                password = ""
+//                confirmPassword = ""
+//                passwordVisible = false
+//                confirmPasswordVisible = false
+//                message = ""
+//            }
+//        ) {
+//            Text(text = if (isSignUpMode) "로그인으로 가기" else "회원가입")
+//        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = if (isSignUpMode) "로그인으로 가기" else "회원가입",
+            style = TextStyle(textDecoration = TextDecoration.Underline,fontWeight = FontWeight.Bold),
+            modifier = Modifier.clickable {isSignUpMode = !isSignUpMode
                 // 입력값 초기화
                 name = ""
                 email = ""
@@ -251,14 +293,8 @@ fun AuthScreenEmailPassword(
                 confirmPassword = ""
                 passwordVisible = false
                 confirmPasswordVisible = false
-                message = ""
-            }
-        ) {
-            Text(text = if (isSignUpMode) "Go to Sign In" else "Go to Sign Up")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+                message = ""  }
+        )
         // 안내 메시지
         Text(text = message)
     }
