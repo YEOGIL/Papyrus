@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -24,7 +26,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -39,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -51,7 +54,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.intel.papyrusbaby.R
 
-// 비밀번호 규칙 예시: 최소 하나의 영문자와 하나의 숫자 포함, 길이 8~16자
 private val PASSWORD_REGEX = Regex("^(?=.*[A-Za-z])(?=.*\\d).{8,16}$")
 
 fun isPasswordValid(password: String): Boolean {
@@ -65,6 +67,7 @@ fun AuthScreenEmailPassword(
     onUserAuthenticated: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val scrollState = rememberScrollState()
 
     // (1) 회원가입 / 로그인 모드
     var isSignUpMode by remember { mutableStateOf(true) }
@@ -89,23 +92,24 @@ fun AuthScreenEmailPassword(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFfffae6))
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp)
-            // 아무 데나 탭하면 포커스 해제
+            // 화면의 빈 공간을 탭하면 키보드 포커스 해제
             .pointerInput(Unit) {
-                detectTapGestures(onTap = {
-                    focusManager.clearFocus()
-                })
+                detectTapGestures(onTap = { focusManager.clearFocus() })
             },
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // 상단 영역: 아이콘 위치 (회원가입/로그인 동일)
         Image(
             painter = painterResource(R.drawable.ic_launcher_foreground),
             contentDescription = null,
-            modifier = Modifier.align(Alignment.CenterHorizontally).size(250.dp).offset(y=-40.dp)
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(250.dp)
         )
-        // 모드별 타이틀
-       // Text(text = if (isSignUpMode) "회원가입을 해주세요" else "Sign In")
 
         // (A) 회원가입 모드면 이름 입력
         if (isSignUpMode) {
@@ -113,7 +117,14 @@ fun AuthScreenEmailPassword(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("이름") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -124,7 +135,13 @@ fun AuthScreenEmailPassword(
             onValueChange = { email = it },
             label = { Text("이메일") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -134,7 +151,14 @@ fun AuthScreenEmailPassword(
             onValueChange = { password = it },
             label = { Text("비밀번호") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = if (isSignUpMode) ImeAction.Next else ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                onDone = { focusManager.clearFocus() }
+            ),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 val image =
@@ -142,23 +166,22 @@ fun AuthScreenEmailPassword(
                 Icon(
                     imageVector = image,
                     contentDescription = "Toggle password visibility",
-                    modifier = Modifier.clickable {
-                        passwordVisible = !passwordVisible
-                    }
+                    modifier = Modifier.clickable { passwordVisible = !passwordVisible }
                 )
             }
         )
+        if (isSignUpMode) {
+            Text(
+                text = "비밀번호는 영문자와 숫자를 포함해 8~16자로 입력해주세요.",
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
 
-        Text(
-            text = "비밀번호는 영문자와 숫자를 포함해 8~16자로 입력해주세요.",
-            modifier = Modifier.padding(top = 4.dp)
-        )
-
-        // (D) 회원가입 모드일 때만 비밀번호 규칙 안내 표시
+        // (D) 회원가입 모드일 때 비밀번호 규칙 안내 표시
         if (isSignUpMode && password.isNotEmpty()) {
             if (!isPasswordRuleOk) {
                 Text(
-                    text = "사용할 수 없는 비밀번호 형식입니다..",
+                    text = "사용할 수 없는 비밀번호 형식입니다.",
                     modifier = Modifier.padding(top = 4.dp)
                 )
             } else {
@@ -170,14 +193,20 @@ fun AuthScreenEmailPassword(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        // (E) 회원가입 모드인 경우: 비번 확인란 추가
+        // (E) 회원가입 모드인 경우: 비밀번호 재확인
         if (isSignUpMode) {
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
                 label = { Text("비밀번호 재확인") },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     val image =
@@ -191,20 +220,6 @@ fun AuthScreenEmailPassword(
                     )
                 }
             )
-            if (confirmPassword.isNotEmpty()) {
-                if (!isPasswordMatch) {
-                    Text(
-                        text = "비밀번호가 일치하지 않습니다.",
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                } else {
-                    Text(
-                        text = "비밀번호가 일치합니다.",
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
         }
 
         // (F) 회원가입 / 로그인 버튼
@@ -256,36 +271,20 @@ fun AuthScreenEmailPassword(
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF35713E))
-
         ) {
             Text(text = if (isSignUpMode) "회원가입" else "로그인")
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // (G) 모드 전환 버튼
-//        Button(
-//            onClick = {
-//                isSignUpMode = !isSignUpMode
-//                // 입력값 초기화
-//                name = ""
-//                email = ""
-//                password = ""
-//                confirmPassword = ""
-//                passwordVisible = false
-//                confirmPasswordVisible = false
-//                message = ""
-//            }
-//        ) {
-//            Text(text = if (isSignUpMode) "로그인으로 가기" else "회원가입")
-//        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        // (G) 모드 전환 텍스트 (회원가입 <-> 로그인)
         Text(
             text = if (isSignUpMode) "로그인으로 가기" else "회원가입",
-            style = TextStyle(textDecoration = TextDecoration.Underline,fontWeight = FontWeight.Bold),
-            modifier = Modifier.clickable {isSignUpMode = !isSignUpMode
+            style = TextStyle(
+                textDecoration = TextDecoration.Underline,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier.clickable {
+                isSignUpMode = !isSignUpMode
                 // 입력값 초기화
                 name = ""
                 email = ""
@@ -293,8 +292,11 @@ fun AuthScreenEmailPassword(
                 confirmPassword = ""
                 passwordVisible = false
                 confirmPasswordVisible = false
-                message = ""  }
+                message = ""
+            }
         )
+        Spacer(modifier = Modifier.height(16.dp))
+
         // 안내 메시지
         Text(text = message)
     }
@@ -311,7 +313,6 @@ fun signUpWithEmail(
     Firebase.auth.createUserWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                // displayName 업데이트(옵션)
                 val user = Firebase.auth.currentUser
                 val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest
                     .Builder()
@@ -334,7 +335,8 @@ fun signUpWithEmail(
  * Firebase 이메일/비밀번호 로그인
  */
 fun signInWithEmail(
-    email: String, password: String,
+    email: String,
+    password: String,
     onSuccess: () -> Unit,
     onFail: (String) -> Unit
 ) {
