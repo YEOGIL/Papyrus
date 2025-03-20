@@ -164,6 +164,7 @@ fun WrittenLetterScreen(
         } else {
             Column(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxWidth()
                     .background(Color(0xFFF7ECCD), shape = RoundedCornerShape(20.dp))
                     .padding(20.dp)
@@ -216,7 +217,7 @@ fun WrittenLetterScreen(
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF221F10),
                     modifier = Modifier
-                        .fillMaxHeight(0.5f)
+                        .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 )
             }
@@ -226,7 +227,8 @@ fun WrittenLetterScreen(
             Spacer(modifier = Modifier.height(20.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 if (generationSuccessful) {
                     Text(

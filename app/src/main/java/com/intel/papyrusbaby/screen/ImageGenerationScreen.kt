@@ -507,7 +507,7 @@ fun saveBitmapToGallery(
 fun saveBitmapToCache(
     context: Context,
     bitmap: Bitmap,
-    fileName: String = "temp_image_${System.currentTimeMillis()}.png"
+    fileName: String = "shared_image_${System.currentTimeMillis()}.png"
 ): android.net.Uri? {
     val cacheDir = File(context.cacheDir, "images")
     if (!cacheDir.exists()) cacheDir.mkdirs()

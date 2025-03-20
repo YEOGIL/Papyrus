@@ -125,7 +125,7 @@ fun AuthorInfoDialog(author: Author, navController: NavController, onDismiss: ()
 
                         // 6) 작가 명언
                         // 예: ["명언1", "명언2"] -> "명언1, 명언2"
-                        val quotesText = author.quotes.joinToString("\n") { quote -> "\"$quote\"" }
+                        val quotesText = "\"${author.quotes[0]}\""
                         if (quotesText.isNotEmpty()) {
                             Text(
                                 text = quotesText,

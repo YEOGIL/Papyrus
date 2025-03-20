@@ -100,4 +100,14 @@ object ArchiveRepository {
             themeList = themeList
         )
     }
+
+    suspend fun deleteArchiveItem(docId: String) {
+        val user = auth.currentUser ?: return
+        firestore.collection("users")
+            .document(user.uid)
+            .collection("generatedArchives")
+            .document(docId)
+            .delete()
+            .await()
+    }
 }
