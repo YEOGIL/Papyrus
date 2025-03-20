@@ -57,6 +57,7 @@ import com.intel.papyrusbaby.R
 import com.intel.papyrusbaby.firebase.Author
 import com.intel.papyrusbaby.firebase.AuthorRepository
 import com.intel.papyrusbaby.navigation.Screen
+import com.intel.papyrusbaby.ui.theme.PapyrusMainBackground
 import com.intel.papyrusbaby.util.ThemeSelectionDialog
 import java.net.URLEncoder
 
@@ -137,7 +138,7 @@ fun WriteLetterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFFFAE6))
+            .background(PapyrusMainBackground)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = { focusManager.clearFocus() })
             }
@@ -213,7 +214,7 @@ fun WriteLetterScreen(
                         modifier = Modifier
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFF94907F),
+                                color = Color(0xFF5C5945),
                                 shape = RoundedCornerShape(5.dp)
                             )
                             .background(

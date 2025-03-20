@@ -6,16 +6,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.intel.papyrusbaby.screen.ThemeType
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ThemeSelectionDialog(
     allThemes: List<ThemeType>,
@@ -41,8 +42,8 @@ fun ThemeSelectionDialog(
     // 내부에서 체크박스로 선택한 항목을 저장할 임시 상태
     var tempSelected by remember { mutableStateOf(initiallySelected) }
 
-    // Dialog(또는 AlertDialog) 활용
-    Dialog(onDismissRequest = onDismiss) {
+    // Dialog(또는 AlertDialog) 활용 (백버튼 등으로 닫힐 때도 onConfirm 호출)
+    Dialog(onDismissRequest = { onConfirm(tempSelected) }) {
         Surface(
             shape = RoundedCornerShape(8.dp),
             color = Color(0xFFF7ECCD),
@@ -52,29 +53,25 @@ fun ThemeSelectionDialog(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text("테마 선택", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("테마 선택", fontWeight = FontWeight.Bold, fontSize = 20.sp)
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // ThemeType 목록을 체크박스로 표시
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
+                // ThemeType 목록을 FlowRow로 표시 (한 줄에 여러 항목 배치, 최대 4개씩)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    maxItemsInEachRow = 4,
                 ) {
-                    // 1) 테마 목록을 Box로 표시 (체크박스 대신 HomeScreen 스타일)
                     allThemes.forEach { theme ->
                         val isSelected = theme in tempSelected
 
-                        // 클릭하면 선택/해제 토글
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
                                 .border(
                                     1.dp,
                                     shape = RoundedCornerShape(5.dp),
@@ -85,6 +82,7 @@ fun ThemeSelectionDialog(
                                     shape = RoundedCornerShape(5.dp)
                                 )
                                 .clickable {
+                                    // 테마 항목 선택/해제시 자동으로 업데이트
                                     tempSelected = if (isSelected) {
                                         tempSelected - theme
                                     } else {
@@ -102,27 +100,43 @@ fun ThemeSelectionDialog(
                         }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 2) 확인 & 취소 버튼
+                // 하단 버튼 영역: "초기화"와 "닫기" 버튼
                 Row(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "취소",
+                    Box(
                         modifier = Modifier
-                            .clickable { onDismiss() }
-                            .padding(8.dp)
-                    )
-                    Text(
-                        text = "확인",
+                            .background(
+                                color = Color(0xFF5C5945),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable { tempSelected = emptyList() }
+                    ) {
+                        Text(
+                            text = "초기화",
+                            color = Color(0xFFFFFAE6),
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
                         modifier = Modifier
-                            .clickable {
-                                onConfirm(tempSelected)
-                            }
-                            .padding(8.dp)
-                    )
+                            .background(
+                                color = Color(0xFF5C5945),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable { onConfirm(tempSelected) }
+                    ) {
+                        Text(
+                            text = "닫기",
+                            color = Color(0xFFFFFAE6),
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
                 }
             }
         }
