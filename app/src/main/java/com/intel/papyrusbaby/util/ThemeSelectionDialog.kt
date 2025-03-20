@@ -56,7 +56,7 @@ fun ThemeSelectionDialog(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text("테마 선택", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text("테마 선택", fontWeight = FontWeight.Bold, fontSize = 28.sp)
 
                 Spacer(modifier = Modifier.height(16.dp))
 

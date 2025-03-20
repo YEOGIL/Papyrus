@@ -255,6 +255,7 @@ fun WriteLetterScreen(
                 onValueChange = { currentInput = it },
                 modifier = Modifier.weight(1f)
             )
+            Spacer(modifier = Modifier.width(4.dp))
             IconButton(onClick = {
                 if (currentInput.isNotBlank()) {
                     // URL 인코딩

@@ -13,9 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,11 +21,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Surface
 
 @Composable
-fun LogOutDialog(
+fun DeleteConfirmDialog(
     onDismiss: () -> Unit,
-    onLogOut: () -> Unit
+    onConfirm: () -> Unit
 ) {
     Dialog(onDismissRequest = { onDismiss() }) {
         Surface(
@@ -39,10 +39,10 @@ fun LogOutDialog(
                 .wrapContentHeight()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("계정 로그 아웃", fontWeight = FontWeight.Bold, fontSize = 28.sp)
+                Text("삭제 확인", fontWeight = FontWeight.Bold, fontSize = 28.sp)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "로그아웃 하시겠습니까?",
+                    "이 항목을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.",
                     fontSize = 16.sp,
                     color = Color(0xFF5C5945)
                 )
@@ -51,25 +51,33 @@ fun LogOutDialog(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // 취소 버튼
+                    // 취소 버튼 (테두리만 있는 스타일)
                     Box(
                         modifier = Modifier
                             .border(BorderStroke(1.dp, Color(0xFF5C5945)), shape = RoundedCornerShape(8.dp))
                             .clickable { onDismiss() }
                     ) {
-                        Text("취소", color = Color(0xFF5C5945), modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "취소",
+                            color = Color(0xFF5C5945),
+                            modifier = Modifier.padding(8.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    // 확인 버튼
+                    // 확인 버튼 (채워진 스타일)
                     Box(
                         modifier = Modifier
                             .background(Color(0xFF5C5945), shape = RoundedCornerShape(8.dp))
                             .clickable {
                                 onDismiss()
-                                onLogOut()
+                                onConfirm()
                             }
                     ) {
-                        Text("확인", color = Color(0xFFFFFAE6), modifier = Modifier.padding(8.dp))
+                        Text(
+                            text = "확인",
+                            color = Color(0xFFFFFAE6),
+                            modifier = Modifier.padding(8.dp)
+                        )
                     }
                 }
             }

@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,18 +35,20 @@ import androidx.navigation.NavController
 import com.intel.papyrusbaby.firebase.ArchiveItem
 import com.intel.papyrusbaby.firebase.ArchiveRepository
 import com.intel.papyrusbaby.navigation.Screen
+import com.intel.papyrusbaby.util.DeleteConfirmDialog
 import kotlinx.coroutines.launch
 
 @Composable
 fun ArchivedListScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     var archiveList by remember { mutableStateOf<List<ArchiveItem>>(emptyList()) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selectedItemId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         scope.launch {
             // Firestore에서 아카이브 목록 불러오기
-            val result = ArchiveRepository.getAllArchives()
-            archiveList = result
+            archiveList = ArchiveRepository.getAllArchives()
         }
     }
 
@@ -56,8 +62,7 @@ fun ArchivedListScreen(navController: NavController) {
         if (archiveList.isEmpty()) {
             // 데이터가 없을 때 표시할 영역
             Box(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -90,6 +95,23 @@ fun ArchivedListScreen(navController: NavController) {
                             }
                             .padding(16.dp)
                     ) {
+                        // 삭제 아이콘 버튼: 우측 상단에 배치
+                        IconButton(
+                            onClick = {
+                                // 삭제 다이얼로그를 띄우기 위해 선택된 아이템의 docId 저장
+                                selectedItemId = item.docId
+                                showDeleteDialog = true
+                            },
+                            modifier = Modifier.align(Alignment.TopEnd)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "삭제",
+                                tint = Color.White,
+                            )
+                        }
+
+                        // 아카이브 항목 내용
                         Column {
                             Text(
                                 text = "작성일: ${item.writtenDate}",
@@ -122,6 +144,20 @@ fun ArchivedListScreen(navController: NavController) {
                     }
                 }
             }
+        }
+
+        // 삭제 확인 다이얼로그 표시
+        if (showDeleteDialog && selectedItemId != null) {
+            DeleteConfirmDialog(
+                onDismiss = { showDeleteDialog = false },
+                onConfirm = {
+                    scope.launch {
+                        ArchiveRepository.deleteArchiveItem(selectedItemId!!)
+                        archiveList = ArchiveRepository.getAllArchives()
+                    }
+                    showDeleteDialog = false
+                }
+            )
         }
     }
 }
