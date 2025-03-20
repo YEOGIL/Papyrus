@@ -44,10 +44,11 @@ fun ThemeSelectionDialog(
     // Dialog(또는 AlertDialog) 활용
     Dialog(onDismissRequest = onDismiss) {
         Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = Color(0xFFF7ECCD),
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .background(Color.White, shape = RoundedCornerShape(8.dp))
         ) {
             Column(
                 modifier = Modifier

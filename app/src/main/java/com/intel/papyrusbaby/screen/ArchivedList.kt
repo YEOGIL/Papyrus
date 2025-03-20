@@ -83,7 +83,7 @@ fun ArchivedListScreen(navController: NavController) {
                             .background(color = Color(0xFF94907F), shape = RoundedCornerShape(8.dp))
                             .clickable {
                                 navController.navigate(Screen.ArchiveDetail.createRoute(item.docId)) {
-                                    popUpTo(Screen.Archive.route) { inclusive = true }
+                                    popUpTo(Screen.ArchiveDetail.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
 
