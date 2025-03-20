@@ -238,8 +238,10 @@ fun BackgroundSelector(
                         .size(60.dp)
                         .clickable { onBackgroundSelected(res) }
                         .border(
-                            width = 2.dp,
-                            color = if (selectedBackgroundRes == res) Color.Blue else Color.Transparent,
+                            width = if (selectedBackgroundRes == res) 2.dp else 1.dp,
+                            color = if (selectedBackgroundRes == res) Color(0xFF5C5945) else Color(
+                                0xFF94907F
+                            ),
                             shape = RoundedCornerShape(8.dp)
                         )
                 )
