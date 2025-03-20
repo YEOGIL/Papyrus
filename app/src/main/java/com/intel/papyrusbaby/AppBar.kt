@@ -271,7 +271,7 @@ fun PapyrusTopBar(
             tint = Color.Unspecified,
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(12.dp)
+                .padding(top = 12.dp, start = 12.dp, end = 12.dp)
                 .clickable { onDrawerOpen() }
         )
 
@@ -282,19 +282,19 @@ fun PapyrusTopBar(
             tint = Color.Unspecified,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(12.dp)
+                .padding(top = 12.dp, start = 12.dp, end = 12.dp)
         )
 
         // Back button
-        if (currentRoute == "archiveDetail" || currentRoute == "imageGeneration") {
+        if (currentRoute == Screen.ArchiveDetail.route || currentRoute == Screen.ImageGeneration.route) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(12.dp)
+                    .padding(top = 12.dp, start = 12.dp, end = 12.dp)
             ) {
                 Text(
                     text = "뒤로가기",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF5C5945),
                     modifier = Modifier

@@ -136,25 +136,6 @@ fun ShowArchivedLetterContents(
                     color = Color(0xFF1B1818)
                 )
             }
-
-//            Text(
-//                text = "뒤로가기",
-//                color = Color(0xFF5C5945),
-//                fontSize = 16.sp,
-//                fontWeight = FontWeight.SemiBold,
-//                modifier = Modifier
-//                    .align(Alignment.TopEnd)
-//                    .border(
-//                        1.dp,
-//                        shape = RoundedCornerShape(5.dp),
-//                        color = Color(0xFF94907F)
-//                    )
-//                    .clickable {
-//                        // 목록 화면으로 돌아가기
-//                        navController.popBackStack()
-//                    }
-//                    .padding(horizontal = 10.dp, vertical = 5.dp)
-//            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))

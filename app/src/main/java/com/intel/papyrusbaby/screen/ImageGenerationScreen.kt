@@ -107,43 +107,30 @@ fun ImageGenerationScreen(
             Log.e("ImageGenerationScreen", "Error generating image", e)
         }
     }
-    Column(modifier = Modifier
-        .background(Color(0xFFfffae6))
-        .fillMaxWidth()
-        .padding(16.dp)) {
-        Text(
-            text = "뒤로가기",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF5C5945),
-            modifier = Modifier
-                .align(Alignment.End)
-                .clickable { navController.popBackStack() }
-                .border(1.dp, shape = RoundedCornerShape(5.dp), color = Color(0xFF94907F))
-                .padding(horizontal = 10.dp, vertical = 5.dp)
+    Column(
+        modifier = Modifier
+            .background(Color(0xFFfffae6))
+            .fillMaxWidth()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
+        BackgroundSelector(
+            selectedBackground = selectedBackground,
+            onBackgroundSelected = { selectedBackground = it }
         )
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            BackgroundSelector(
-                selectedBackground = selectedBackground,
-                onBackgroundSelected = { selectedBackground = it }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            FontSelector(
-                selectedFont = selectedFont,
-                onFontSelected = { selectedFont = it }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            generatedBitmap?.let { bitmap ->
-                GeneratedLetterPreview(bitmap = bitmap)
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            generatedBitmap?.let { bitmap ->
-                ActionButtons(context = context, bitmap = bitmap)
-            }
+        Spacer(modifier = Modifier.height(16.dp))
+        FontSelector(
+            selectedFont = selectedFont,
+            onFontSelected = { selectedFont = it }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        generatedBitmap?.let { bitmap ->
+            GeneratedLetterPreview(bitmap = bitmap)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        generatedBitmap?.let { bitmap ->
+            ActionButtons(context = context, bitmap = bitmap)
         }
     }
 }
