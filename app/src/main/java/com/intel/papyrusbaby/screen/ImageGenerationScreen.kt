@@ -18,10 +18,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,7 +37,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -138,6 +139,7 @@ fun ImageGenerationScreen(
 
     Column(
         modifier = Modifier
+            .background(Color(0xFFfffae6))
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
@@ -164,6 +166,7 @@ fun ImageGenerationScreen(
             cuteFont = cuteFont,
             handwritingFont = handFont,
             handwritingThinFont = handThinFont,
+            selectedFont = selectedFont,
             onFontSelected = { font ->
                 Log.d("FontSelector", "Selected font: $font")
                 selectedFont = font
@@ -221,7 +224,13 @@ fun BackgroundSelector(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            listOf(R.drawable.paper01, R.drawable.paper02).forEach { res ->
+            listOf(
+                R.drawable.paper01,
+                R.drawable.paper02,
+                R.drawable.paper03,
+                R.drawable.paper04,
+                R.drawable.paper05
+            ).forEach { res ->
                 Image(
                     painter = painterResource(id = res),
                     contentDescription = "Paper Image",
@@ -246,12 +255,14 @@ fun FontSelector(
     cuteFont: FontFamily,
     handwritingFont: FontFamily,
     handwritingThinFont: FontFamily,
+    selectedFont: FontFamily,
     onFontSelected: (FontFamily) -> Unit
 ) {
     Column {
         Text(text = "폰트 선택", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
@@ -264,9 +275,30 @@ fun FontSelector(
                 "Thin" to handwritingThinFont
             )
             fonts.forEach { (label, fontFamily) ->
-                Button(onClick = { onFontSelected(fontFamily) }) {
-                    Text(text = label)
+                Box(
+                    modifier = Modifier
+                        .border(
+                            1.dp,
+                            shape = RoundedCornerShape(5.dp),
+                            color = Color(0xFF5C5945)
+                        )
+                        .background(
+                            color = if (selectedFont == fontFamily) Color(0xFF5C5945) else Color.Transparent,
+                            shape = RoundedCornerShape(5.dp)
+                        )
+                        .clickable { onFontSelected(fontFamily) }
+                ) {
+                    Text(
+                        text = label,
+                        color = if (selectedFont == fontFamily) Color(0xFFFFFAE6) else Color(
+                            0xFF5C5945
+                        ),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
                 }
+
             }
         }
     }
@@ -294,40 +326,92 @@ fun ActionButtons(context: Context, bitmap: Bitmap) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Button(onClick = {
-            try {
-                val imageUri = saveBitmapToCache(context, bitmap)
-                if (imageUri != null) {
-                    val shareIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_STREAM, imageUri)
-                        type = "image/png"
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        Box(
+            modifier = Modifier
+                .border(
+                    1.dp,
+                    shape = RoundedCornerShape(5.dp),
+                    color = Color(0xFF5C5945)
+                )
+                .background(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(5.dp)
+                )
+                .clickable {
+                    try {
+                        val imageUri = saveBitmapToCache(context, bitmap)
+                        if (imageUri != null) {
+                            val shareIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_STREAM, imageUri)
+                                type = "image/png"
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "이미지 공유"))
+                        } else {
+                            Toast
+                                .makeText(context, "이미지 공유 실패", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    } catch (e: Exception) {
+                        Toast
+                            .makeText(context, "공유 중 에러 발생: ${e.message}", Toast.LENGTH_SHORT)
+                            .show()
                     }
-                    context.startActivity(Intent.createChooser(shareIntent, "이미지 공유"))
-                } else {
-                    Toast.makeText(context, "이미지 공유 실패", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "공유 중 에러 발생: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }) {
-            Text("공유하기")
+        ) {
+            Text(
+                text = "공유하기",
+                color = Color(
+                    0xFF5C5945
+                ),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+            )
         }
-        Button(onClick = {
-            try {
-                val savedUri = saveBitmapToGallery(context, bitmap)
-                if (savedUri != null) {
-                    Toast.makeText(context, "저장되었습니다.", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "저장 실패", Toast.LENGTH_SHORT).show()
+
+        Box(
+            modifier = Modifier
+                .border(
+                    1.dp,
+                    shape = RoundedCornerShape(5.dp),
+                    color = Color(0xFF5C5945)
+                )
+                .background(
+                    color = Color.Transparent,
+                    shape = RoundedCornerShape(5.dp)
+                )
+                .clickable {
+                    try {
+                        val savedUri = saveBitmapToGallery(context, bitmap)
+                        if (savedUri != null) {
+                            Toast
+                                .makeText(context, "저장되었습니다.", Toast.LENGTH_SHORT)
+                                .show()
+                        } else {
+                            Toast
+                                .makeText(context, "저장 실패", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    } catch (e: Exception) {
+                        Toast
+                            .makeText(context, "저장 중 에러 발생: ${e.message}", Toast.LENGTH_SHORT)
+                            .show()
+                    }
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "저장 중 에러 발생: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }) {
-            Text("저장하기")
+        ) {
+            Text(
+                text = "저장하기",
+                color = Color(
+                    0xFF5C5945
+                ),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+            )
         }
+
     }
 }
 
@@ -456,6 +540,7 @@ fun getBitmapFromVectorDrawable(context: Context, resId: Int, width: Int, height
 fun ImageGenerationScreenPreview() {
     val context = LocalContext.current
     val navController = NavController(context)
-    val sampleText = "서로의 손길로 이룬 꿈의 조각들, 여러분의 노고가 이 프로젝트를 빛나게 했습니다. 한 걸음 한 걸음 함께해 온 시간 속에서, 여러분의 열정과 헌신이 얼마나 큰 힘이 되었는지 모릅니다. 힘든 순간마다 서로를 격려하며 나아간 우리, 그 과정이야말로 진정한 가치입니다. 이제는 그 결실을 바라보며, 서로의 수고를 인정하고 감사하는 마음으로 더 나아갑시다. 우리의 작은 발걸음이 모여 큰 길을 이룰 것임을 믿습니다. 함께 해주셔서 진심으로 고맙습니다."
+    val sampleText =
+        "서로의 손길로 이룬 꿈의 조각들, 여러분의 노고가 이 프로젝트를 빛나게 했습니다. 한 걸음 한 걸음 함께해 온 시간 속에서, 여러분의 열정과 헌신이 얼마나 큰 힘이 되었는지 모릅니다. 힘든 순간마다 서로를 격려하며 나아간 우리, 그 과정이야말로 진정한 가치입니다. 이제는 그 결실을 바라보며, 서로의 수고를 인정하고 감사하는 마음으로 더 나아갑시다. 우리의 작은 발걸음이 모여 큰 길을 이룰 것임을 믿습니다. 함께 해주셔서 진심으로 고맙습니다."
     ImageGenerationScreen(navController = navController, letterText = sampleText)
 }
