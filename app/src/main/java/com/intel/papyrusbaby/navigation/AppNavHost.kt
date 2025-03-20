@@ -99,7 +99,7 @@ fun AppNavHost(
             arguments = listOf(navArgument("letterText") { defaultValue = "" })
         ) { backStackEntry ->
             val letterText = backStackEntry.arguments?.getString("letterText") ?: ""
-            ImageGenerationScreen(navController, letterText)
+            ImageGenerationScreen(letterText)
         }
     }
 }
