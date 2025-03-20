@@ -48,6 +48,12 @@ import com.intel.papyrusbaby.navigation.Screen
 import com.intel.papyrusbaby.util.LogOutDialog
 import kotlinx.coroutines.launch
 
+// 공통 색상 상수
+private val BackgroundColor = Color(0xFFfffae6)
+private val DrawerBackgroundColor = Color(0xFFF7ECCD)
+private val TextColor = Color(0xFF5C5945)
+private val BorderColor = Color(0xFF94907F)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppBar(
@@ -56,8 +62,7 @@ fun AppBar(
     content: @Composable (PaddingValues) -> Unit,
     navController: NavController
 ) {
-    // 상단/하단바를 숨길 라우트를 정의합니다.
-    // 예: 인증 화면("auth")에서는 두 바 모두 숨기고, 이미지 생성 화면("imageGeneration")에서는 하단바만 숨김
+    // 상단/하단바를 숨길 라우트 목록
     val hideTopBarRoutes = listOf(Screen.Auth.route)
     val hideBottomBarRoutes = listOf(Screen.Auth.route, Screen.ImageGeneration.route)
 
@@ -68,13 +73,12 @@ fun AppBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // 만약 현재 라우트가 hideTopBarRoutes에 포함되어 있다면 상단바와 하단바를 모두 숨기고 content만 노출합니다.
+    // 상단바를 숨길 경우 content만 노출
     if (currentRoute in hideTopBarRoutes) {
         content(PaddingValues())
         return
     }
 
-    // 그 외의 경우 ModalNavigationDrawer와 Scaffold로 상단바와 하단바를 구성합니다.
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = drawerState.isOpen,
@@ -90,7 +94,6 @@ fun AppBar(
         content = {
             Scaffold(
                 topBar = {
-                    // 상단바는 hideTopBarRoutes에 포함되지 않은 경우 항상 노출합니다.
                     PapyrusTopBar(
                         navController = navController,
                         currentRoute = currentRoute,
@@ -98,7 +101,6 @@ fun AppBar(
                     )
                 },
                 bottomBar = {
-                    // 하단바는 현재 라우트가 hideBottomBarRoutes에 포함되어 있지 않은 경우에만 노출합니다.
                     if (currentRoute !in hideBottomBarRoutes) {
                         PapyrusBottomBar(
                             currentRoute = currentRoute,
@@ -123,12 +125,25 @@ fun AppBar(
                         )
                     }
                 }
-            ) { paddingValues -> content(paddingValues) }
+            ) { paddingValues ->
+                content(paddingValues)
+            }
         }
     )
 }
 
-// Drawer content 정의
+// Drawer에 사용되는 단일 항목 컴포저블 (텍스트와 클릭 이벤트 처리)
+@Composable
+fun DrawerNavItem(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Text(text = text, modifier = Modifier.padding(16.dp))
+    }
+}
+
 @Composable
 fun DrawerContent(
     navController: NavController,
@@ -143,7 +158,6 @@ fun DrawerContent(
         LogOutDialog(
             onDismiss = { showLogOutDialog = false },
             onLogOut = {
-                // signOut
                 Firebase.auth.signOut()
                 coroutineScope.launch { drawerState.close() }
                 navController.navigate("auth") {
@@ -157,15 +171,16 @@ fun DrawerContent(
         modifier = Modifier
             .fillMaxWidth(0.8f)
             .fillMaxHeight()
-            .background(Color(0xFFF7ECCD))
+            .background(DrawerBackgroundColor)
             .statusBarsPadding()
             .padding(16.dp)
     ) {
+        // 상단 Drawer 헤더 (닫기 아이콘과 로고)
         Box(modifier = Modifier.fillMaxWidth()) {
             Icon(
                 painter = painterResource(R.drawable.icon_drawerclose),
                 tint = Color.Unspecified,
-                contentDescription = "CloseDrawer",
+                contentDescription = "Close Drawer",
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .clickable { coroutineScope.launch { drawerState.close() } }
@@ -178,6 +193,7 @@ fun DrawerContent(
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
+        // 사용자 인사말 또는 로그인 안내
         if (currentUser != null) {
             Text(
                 text = "반갑습니다, ${currentUser.displayName ?: currentUser.email ?: "User"} 님",
@@ -189,66 +205,39 @@ fun DrawerContent(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    coroutineScope.launch { drawerState.close() }
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-        ) {
-            Text(text = "홈으로", modifier = Modifier.padding(16.dp))
+        // 네비게이션 항목들
+        DrawerNavItem(text = "홈으로") {
+            coroutineScope.launch { drawerState.close() }
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Home.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    coroutineScope.launch { drawerState.close() }
-                    navController.navigate("write") {
-                        popUpTo("write") { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-        ) {
-            Text(text = "작성하기", modifier = Modifier.padding(16.dp))
+        DrawerNavItem(text = "작성하기") {
+            coroutineScope.launch { drawerState.close() }
+            navController.navigate(Screen.Write.route) {
+                popUpTo(Screen.Write.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    coroutineScope.launch { drawerState.close() }
-                    navController.navigate("archive") {
-                        popUpTo("archive") { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-        ) {
-            Text(text = "보관함", modifier = Modifier.padding(16.dp))
+        DrawerNavItem(text = "보관함") {
+            coroutineScope.launch { drawerState.close() }
+            navController.navigate(Screen.Archive.route) {
+                popUpTo(Screen.Archive.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
         if (currentUser != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showLogOutDialog = true }
-            ) {
-                Text(text = "로그아웃", modifier = Modifier.padding(16.dp))
+            DrawerNavItem(text = "로그아웃") {
+                showLogOutDialog = true
             }
-
-            // 회원 탈퇴
-//        Text(
-//            text = "회원 탈퇴",
-//            modifier = Modifier
-//                .padding(16.dp)
-//                .clickable {
-//                    // 회원 탈퇴 로직
-//                    // user.delete() -> signOut 순서
-//                    onDeleteAccount()
-//                    coroutineScope.launch { drawerState.close() }
-//                }
-//        )
+            // 회원 탈퇴 관련 코드는 필요에 따라 주석 해제하여 추가
+            /*
+            DrawerNavItem(text = "회원 탈퇴") {
+                onDeleteAccount()
+                coroutineScope.launch { drawerState.close() }
+            }
+            */
         }
     }
 }
@@ -262,12 +251,12 @@ fun PapyrusTopBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFfffae6))
+            .background(BackgroundColor)
             .statusBarsPadding()
     ) {
         Icon(
             painter = painterResource(R.drawable.icon_draweropen),
-            contentDescription = "drawerOpen",
+            contentDescription = "Open Drawer",
             tint = Color.Unspecified,
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -275,31 +264,31 @@ fun PapyrusTopBar(
                 .clickable { onDrawerOpen() }
         )
 
-        // Title
+        // 중앙 로고
         Icon(
             painter = painterResource(R.drawable.papyruslogo),
-            contentDescription = "Menu",
+            contentDescription = "Menu Logo",
             tint = Color.Unspecified,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(top = 12.dp, start = 12.dp, end = 12.dp)
+                .padding(top = 12.dp)
         )
 
-        // Back button
+        // 특정 라우트에서 뒤로가기 버튼 표시
         if (currentRoute == Screen.ArchiveDetail.route || currentRoute == Screen.ImageGeneration.route) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(top = 12.dp, start = 12.dp, end = 12.dp)
+                    .padding(top = 12.dp, end = 12.dp)
             ) {
                 Text(
                     text = "뒤로가기",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF5C5945),
+                    color = TextColor,
                     modifier = Modifier
                         .clickable { navController.popBackStack() }
-                        .border(1.dp, shape = RoundedCornerShape(5.dp), color = Color(0xFF94907F))
+                        .border(1.dp, BorderColor, shape = RoundedCornerShape(5.dp))
                         .padding(horizontal = 10.dp, vertical = 5.dp)
                 )
             }
@@ -319,44 +308,54 @@ fun PapyrusBottomBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFfffae6))
+            .background(BackgroundColor)
             .padding(horizontal = 25.dp, vertical = 10.dp)
             .navigationBarsPadding()
     ) {
-        Icon(
-            painter = painterResource(
-                id = if (currentRoute == "home")
-                    R.drawable.icon_home_filled
-                else
-                    R.drawable.icon_home_outline
-            ),
-            tint = Color.Unspecified,
+        BottomBarIcon(
+            currentRoute = currentRoute,
+            targetRoute = Screen.Home.route,
+            filledIconRes = R.drawable.icon_home_filled,
+            outlineIconRes = R.drawable.icon_home_outline,
             contentDescription = "Home",
-            modifier = Modifier.clickable { onHomeClick() }
+            onClick = onHomeClick
         )
-        Icon(
-            painter = painterResource(
-                id = if (currentRoute == "write?writer={writer}")
-                    R.drawable.icon_add_filled
-                else
-                    R.drawable.icon_add_outline
-            ),
-            tint = Color.Unspecified,
-            contentDescription = "CreateLetter",
-            modifier = Modifier.clickable { onWriteClick() }
+        BottomBarIcon(
+            currentRoute = currentRoute,
+            targetRoute = Screen.Write.route,
+            filledIconRes = R.drawable.icon_add_filled,
+            outlineIconRes = R.drawable.icon_add_outline,
+            contentDescription = "Create Letter",
+            onClick = onWriteClick
         )
-        Icon(
-            painter = painterResource(
-                id = if (currentRoute == "archive")
-                    R.drawable.icon_archive_filled
-                else
-                    R.drawable.icon_archive_outline
-            ),
-            tint = Color.Unspecified,
-            contentDescription = "ArchivedLetters",
-            modifier = Modifier.clickable { onArchiveClick() }
+        BottomBarIcon(
+            currentRoute = currentRoute,
+            targetRoute = Screen.Archive.route,
+            filledIconRes = R.drawable.icon_archive_filled,
+            outlineIconRes = R.drawable.icon_archive_outline,
+            contentDescription = "Archived Letters",
+            onClick = onArchiveClick
         )
     }
+}
+
+// 공통 BottomBar 아이콘 컴포저블: 현재 라우트와 비교하여 채워진 아이콘 혹은 외곽 아이콘을 보여줍니다.
+@Composable
+fun BottomBarIcon(
+    currentRoute: String?,
+    targetRoute: String,
+    filledIconRes: Int,
+    outlineIconRes: Int,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    val iconRes = if (currentRoute == targetRoute) filledIconRes else outlineIconRes
+    Icon(
+        painter = painterResource(id = iconRes),
+        tint = Color.Unspecified,
+        contentDescription = contentDescription,
+        modifier = Modifier.clickable { onClick() }
+    )
 }
 
 @Preview(showBackground = true)
