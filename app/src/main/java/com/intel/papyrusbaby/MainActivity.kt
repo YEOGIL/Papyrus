@@ -25,11 +25,11 @@ class MainActivity : ComponentActivity() {
         // (1) Firebase Auth의 currentUser를 State로 관리
         val currentFirebaseUser = mutableStateOf(Firebase.auth.currentUser)
 
-        // (2) AuthStateListener 등록
-        val authStateListener = FirebaseAuth.AuthStateListener { auth ->
+        // (2) 클래스 프로퍼티에 직접 AuthStateListener 할당
+        authStateListener = FirebaseAuth.AuthStateListener { auth ->
             currentFirebaseUser.value = auth.currentUser
         }
-        // (3) onCreate 시점에 리스너 추가, onDestroy 시점에 제거
+        // (3) 리스너 추가
         Firebase.auth.addAuthStateListener(authStateListener)
 
         setContent {
@@ -65,8 +65,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        // (4) 라이프사이클에 맞춰 리스너 제거
-        Firebase.auth.removeAuthStateListener(authStateListener)
+        // (4) authStateListener가 초기화되었는지 확인 후 제거
+        if (::authStateListener.isInitialized) {
+            Firebase.auth.removeAuthStateListener(authStateListener)
+        }
         super.onDestroy()
     }
 }

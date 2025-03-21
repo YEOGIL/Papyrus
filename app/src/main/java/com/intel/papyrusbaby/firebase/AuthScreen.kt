@@ -1,6 +1,8 @@
 package com.intel.papyrusbaby.firebase
 
+import android.app.Activity
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,6 +39,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -53,6 +56,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.intel.papyrusbaby.R
+import com.intel.papyrusbaby.util.ExitDialog
 
 private val PASSWORD_REGEX = Regex("^(?=.*[A-Za-z])(?=.*\\d).{8,16}$")
 
@@ -66,6 +70,19 @@ fun AuthScreenEmailPassword(
     navController: NavController,
     onUserAuthenticated: () -> Unit
 ) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    // 뒤로가기 다이얼로그
+    var showExitDialog by remember { mutableStateOf(false) }
+    BackHandler { showExitDialog = true }
+    if (showExitDialog) {
+        ExitDialog(
+            onDismiss = { showExitDialog = false },
+            activity = activity
+        )
+    }
+
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
 
