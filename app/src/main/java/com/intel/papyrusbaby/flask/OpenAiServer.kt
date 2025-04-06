@@ -28,7 +28,7 @@ object OpenAiServer {
         callback: (ServerResponse?, String?) -> Unit
     ) {
         // Flask 서버
-        val url = "https://starfish-evolved-molly.ngrok-free.app/generate_letter"
+        val url = "https://cuddly-terrier-musical.ngrok-free.app/generate_letter"
 
         // JSON 생성
         val json = JSONObject().apply {
